@@ -2,6 +2,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:quest_game_manager/core/constants/app_constants.dart';
 import 'package:quest_game_manager/core/theme/app_theme.dart';
 import 'package:quest_game_manager/features/catalog/domain/entities/game.dart';
 import 'package:quest_game_manager/features/catalog/presentation/widgets/game_detail_sheet.dart';
@@ -19,12 +21,17 @@ class GameCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => _showGameDetails(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(flex: 3, child: _buildThumbnail()),
-            Expanded(flex: 2, child: _buildInfo(context)),
-          ],
+        child: SizedBox(
+          height: 100,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 100,
+                child: _buildThumbnail(),
+              ),
+              Expanded(child: _buildInfo(context)),
+            ],
+          ),
         ),
       ),
     );
@@ -34,13 +41,13 @@ class GameCard extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        FutureBuilder<bool>(
-          future: _thumbnailExists(),
+        FutureBuilder<String?>(
+          future: _getValidThumbnailPath(),
           builder: (context, snapshot) {
-            final exists = snapshot.data ?? false;
-            if (exists) {
+            final path = snapshot.data;
+            if (path != null) {
               return Image.file(
-                File(_getThumbnailPath()),
+                File(path),
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => _placeholderThumbnail(),
               );
@@ -77,25 +84,42 @@ class GameCard extends StatelessWidget {
 
   Widget _buildInfo(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             game.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleSmall,
           ),
-          const Spacer(),
+          const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.storage, size: 14, color: Colors.grey),
+              const Icon(Icons.storage, size: 12, color: Colors.grey),
               const SizedBox(width: 4),
               Text(
                 '${game.sizeMb} MB',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Colors.grey, fontSize: 12),
               ),
+              ...[
+                const SizedBox(width: 12),
+                const Icon(Icons.update, size: 12, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  'v${game.versionCode}',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.grey, fontSize: 12),
+                ),
+              ],
             ],
           ),
         ],
@@ -103,15 +127,15 @@ class GameCard extends StatelessWidget {
     );
   }
 
-  Future<bool> _thumbnailExists() async {
-    final file = File(_getThumbnailPath());
-    return file.exists();
-  }
-
-  String _getThumbnailPath() {
-    // This would be properly resolved by the catalog repository
-    return '/data/data/com.questgamemanager.quest_game_manager/files/'
-        '.meta/thumbnails/${game.packageName}.jpg';
+  /// Returns the thumbnail path if the file exists, otherwise null.
+  Future<String?> _getValidThumbnailPath() async {
+    final dataDir = await getApplicationDocumentsDirectory();
+    final path = '${dataDir.path}/${AppConstants.thumbnailsPath}/${game.packageName}.jpg';
+    final file = File(path);
+    if (await file.exists()) {
+      return path;
+    }
+    return null;
   }
 
   void _showGameDetails(BuildContext context) {

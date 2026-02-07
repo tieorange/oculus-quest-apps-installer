@@ -36,6 +36,12 @@ import 'package:quest_game_manager/features/config/domain/repositories/config_re
     as _i118;
 import 'package:quest_game_manager/features/config/domain/usecases/fetch_config.dart'
     as _i155;
+import 'package:quest_game_manager/features/downloads/data/datasources/download_remote_datasource.dart'
+    as _i1009;
+import 'package:quest_game_manager/features/downloads/data/repositories/download_repository_impl.dart'
+    as _i244;
+import 'package:quest_game_manager/features/downloads/domain/repositories/download_repository.dart'
+    as _i269;
 import 'package:quest_game_manager/features/downloads/presentation/bloc/downloads_bloc.dart'
     as _i505;
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart'
@@ -54,7 +60,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     final registerModule = _$RegisterModule();
     gh.factory<_i259.SearchGames>(() => _i259.SearchGames());
-    gh.factory<_i505.DownloadsBloc>(() => _i505.DownloadsBloc());
     gh.lazySingleton<_i361.Dio>(() => registerModule.dio);
     gh.lazySingleton<_i251.ConfigLocalDatasource>(
         () => _i251.ConfigLocalDatasource());
@@ -64,6 +69,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i803.ConfigRemoteDatasource(gh<_i361.Dio>()));
     gh.lazySingleton<_i24.CatalogRemoteDatasource>(
         () => _i24.CatalogRemoteDatasource(gh<_i361.Dio>()));
+    gh.lazySingleton<_i1009.DownloadRemoteDatasource>(
+        () => _i1009.DownloadRemoteDatasource(gh<_i361.Dio>()));
+    gh.lazySingleton<_i269.DownloadRepository>(() =>
+        _i244.DownloadRepositoryImpl(gh<_i1009.DownloadRemoteDatasource>()));
     gh.factory<_i361.CatalogRepository>(() => _i312.CatalogRepositoryImpl(
           gh<_i24.CatalogRemoteDatasource>(),
           gh<_i418.CatalogLocalDatasource>(),
@@ -75,6 +84,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i118.ConfigRepository>(() => _i1022.ConfigRepositoryImpl(
           gh<_i803.ConfigRemoteDatasource>(),
           gh<_i251.ConfigLocalDatasource>(),
+        ));
+    gh.factory<_i505.DownloadsBloc>(() => _i505.DownloadsBloc(
+          gh<_i269.DownloadRepository>(),
+          gh<_i118.ConfigRepository>(),
         ));
     gh.factory<_i155.FetchConfig>(
         () => _i155.FetchConfig(gh<_i118.ConfigRepository>()));

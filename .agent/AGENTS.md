@@ -204,6 +204,117 @@ android {
 
 ---
 
+## Native Platform Channels
+
+### 7-Zip Extraction (Android)
+
+The app uses a native Kotlin implementation for extracting password-protected `.7z` archives, since no pure Dart solution exists.
+
+**Dependencies** (`android/app/build.gradle.kts`):
+```kotlin
+dependencies {
+    implementation("org.apache.commons:commons-compress:1.26.1")
+    implementation("org.tukaani:xz:1.9")
+}
+```
+
+**MethodChannel**: `com.questgamemanager.quest_game_manager/archive`
+
+**Method**: `extract7z`
+
+| Argument | Type | Description |
+|----------|------|-------------|
+| `filePath` | String | Absolute path to the `.7z` file |
+| `outDir` | String | Directory to extract files to |
+| `password` | String? | Archive password (optional) |
+
+**Kotlin Implementation** (`MainActivity.kt`):
+```kotlin
+private fun extract7z(filePath: String, outDir: String, password: String?) {
+    val file = File(filePath)
+    val sevenZFile = if (password != null) {
+        SevenZFile(file, password.toCharArray())
+    } else {
+        SevenZFile(file)
+    }
+    
+    var entry = sevenZFile.nextEntry
+    while (entry != null) {
+        if (entry.isDirectory) {
+            File(outDir, entry.name).mkdirs()
+        } else {
+            val outFile = File(outDir, entry.name)
+            outFile.parentFile?.mkdirs()
+            FileOutputStream(outFile).use { out ->
+                val buffer = ByteArray(8192)
+                var len: Int
+                while (sevenZFile.read(buffer).also { len = it } > 0) {
+                    out.write(buffer, 0, len)
+                }
+            }
+        }
+        entry = sevenZFile.nextEntry
+    }
+    sevenZFile.close()
+}
+```
+
+**Dart Usage** (`CatalogRemoteDatasource`):
+```dart
+const channel = MethodChannel('com.questgamemanager.quest_game_manager/archive');
+await channel.invokeMethod<bool>('extract7z', {
+  'filePath': '/path/to/meta.7z',
+  'outDir': '/path/to/output',
+  'password': 'archivePassword',
+});
+```
+
+---
+
+## Networking: Cloudflare Bypass
+
+### Problem: TLS Fingerprinting
+
+Cloudflare blocks requests based on TLS/JA3 fingerprints. Dart's default `HttpClient` has a recognizable fingerprint that triggers 403 Forbidden responses.
+
+### Solution: Native Dio Adapter
+
+The app uses `native_dio_adapter` which leverages:
+- **Android**: Google Cronet (Chrome's networking stack)
+- **iOS**: URLSession (Cupertino HTTP)
+
+These have browser-like TLS fingerprints that bypass most bot detection.
+
+**Installation**:
+```yaml
+dependencies:
+  native_dio_adapter: ^1.5.1
+```
+
+**Configuration** (`lib/core/di/register_module.dart`):
+```dart
+import 'package:native_dio_adapter/native_dio_adapter.dart';
+
+@module
+abstract class RegisterModule {
+  @lazySingleton
+  Dio get dio {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: AppConstants.connectTimeout,
+        receiveTimeout: AppConstants.receiveTimeout,
+      ),
+    );
+    dio.httpClientAdapter = NativeAdapter();  // Key line!
+    return dio;
+  }
+}
+```
+
+**User-Agent**: The app uses `rclone/v1.66.0` to match the expected client.
+
+---
+
 ## Common Development Tasks
 
 ### 1. Adding a New Feature
@@ -349,25 +460,64 @@ dart run build_runner build --delete-conflicting-outputs
 
 ---
 
+## Configuration System
+
+### Remote Config (`vrp-public.json`)
+
+The app downloads configuration from a remote server containing:
+
+```json
+{
+  "baseUri": "https://example.com/",
+  "password": "base64EncodedPassword"
+}
+```
+
+- `baseUri`: CDN/mirror URL for game catalog and downloads
+- `password`: Base64-encoded password for HTTP Basic Auth
+
+### Config Loading Priority
+
+1. **Local cache** (`ConfigLocalDatasource`) - Checked first
+2. **Remote fetch** (`ConfigRemoteDatasource`) - Fallback if local missing
+3. **Hardcoded default** (`AppConstants.defaultConfigJson`) - Ultimate fallback
+
+### Manual Config Override (Settings)
+
+Users can paste custom `vrp-public.json` content in Settings → Server Configuration → Manual Config Check.
+
+**Implementation** (`SettingsCubit.saveConfig`):
+```dart
+Future<void> saveConfig(String jsonString) async {
+  final jsonMap = json.decode(jsonString) as Map<String, dynamic>;
+  final model = PublicConfigModel.fromJson(jsonMap);
+  await _configRepository.saveConfig(model.toEntity());
+}
+```
+
+---
+
 ## Incomplete Features (TODO)
 
 The following features are partially implemented and require completion:
 
-1. **Installer Feature** (`lib/features/installer/`)
-   - Kotlin platform channels for APK installation
-   - `PackageInstallerChannel.kt` and `InstallResultReceiver.kt`
-   - Full install pipeline with progress tracking
+### 1. Installer Feature
+- `lib/features/installer/` structure exists
+- Kotlin platform channels for APK installation needed
+- `PackageInstallerChannel.kt` and `InstallResultReceiver.kt`
+- Full install pipeline with progress tracking
 
-2. **Download Engine**
-   - Resume support with HTTP Range headers
-   - 7za ARM64 binary for archive extraction
-   - Foreground service for background downloads
-   - Storage space validation
+### 2. Download Engine Enhancements
+- Resume support with HTTP Range headers
+- Foreground service for background downloads
+- Storage space validation before download
+- Download queue with priorities
 
-3. **App Polish**
-   - Installed game detection via package manager query
-   - Cache clearing in Settings
-   - Custom app icon
+### 3. App Polish
+- Installed game detection via PackageManager query
+- Cache clearing in Settings (method exists, needs implementation)
+- Custom app icon
+- Game thumbnails from extracted meta archive
 
 ---
 

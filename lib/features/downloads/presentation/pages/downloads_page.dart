@@ -18,17 +18,17 @@ class DownloadsPage extends StatelessWidget {
           builder: (context, state) {
             return switch (state) {
               DownloadsInitial() ||
-              DownloadsLoading() => const Center(child: CircularProgressIndicator()),
-              DownloadsLoaded(:final queue) =>
-                queue.isEmpty
-                    ? const EmptyDownloads()
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: queue.length,
-                        itemBuilder: (context, index) {
-                          return DownloadItem(task: queue[index]);
-                        },
-                      ),
+              DownloadsLoading() =>
+                const Center(child: CircularProgressIndicator()),
+              DownloadsLoaded(:final queue) => queue.isEmpty
+                  ? const EmptyDownloads()
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: queue.length,
+                      itemBuilder: (context, index) {
+                        return DownloadItem(task: queue[index]);
+                      },
+                    ),
               DownloadsError(:final failure) => Center(child: Text(failure.userMessage)),
             };
           },
