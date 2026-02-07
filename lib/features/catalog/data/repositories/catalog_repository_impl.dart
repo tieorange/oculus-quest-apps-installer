@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:injectable/injectable.dart';
 import 'package:quest_game_manager/core/error/exceptions.dart';
 import 'package:quest_game_manager/core/error/failures.dart';
+import 'package:quest_game_manager/core/utils/app_logger.dart';
 import 'package:quest_game_manager/features/catalog/data/datasources/catalog_local_datasource.dart';
 import 'package:quest_game_manager/features/catalog/data/datasources/catalog_remote_datasource.dart';
 import 'package:quest_game_manager/features/catalog/domain/entities/game.dart';
@@ -18,17 +19,44 @@ class CatalogRepositoryImpl implements CatalogRepository {
 
   @override
   Future<Either<Failure, List<Game>>> getGameCatalog(PublicConfig config) async {
+    AppLogger.info('Fetching game catalog from remote', tag: 'CatalogRepo');
     try {
       final models = await _remoteDatasource.fetchCatalog(config);
+      AppLogger.info('Fetched ${models.length} games, caching...', tag: 'CatalogRepo');
       await _localDatasource.cacheGames(models);
+      AppLogger.info('Catalog cached successfully', tag: 'CatalogRepo');
       return Right(models.map((m) => m.toEntity()).toList());
-    } on NetworkException catch (e) {
+    } on NetworkException catch (e, st) {
+      AppLogger.error(
+        'Network error fetching catalog',
+        tag: 'CatalogRepo',
+        error: e,
+        stackTrace: st,
+      );
       return Left(Failure.network(message: e.message));
-    } on ExtractionException catch (e) {
+    } on ExtractionException catch (e, st) {
+      AppLogger.error(
+        'Extraction error',
+        tag: 'CatalogRepo',
+        error: e,
+        stackTrace: st,
+      );
       return Left(Failure.extraction(message: e.message));
-    } on StorageException catch (e) {
+    } on StorageException catch (e, st) {
+      AppLogger.error(
+        'Storage error',
+        tag: 'CatalogRepo',
+        error: e,
+        stackTrace: st,
+      );
       return Left(Failure.storage(message: e.message));
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error(
+        'Unknown error fetching catalog',
+        tag: 'CatalogRepo',
+        error: e,
+        stackTrace: st,
+      );
       return Left(Failure.unknown(message: e.toString()));
     }
   }

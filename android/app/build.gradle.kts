@@ -6,8 +6,8 @@ plugins {
 
 android {
     namespace = "com.questgamemanager.quest_game_manager"
-    compileSdk = 34
-    ndkVersion = "25.1.8937393"
+    compileSdk = 36
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -21,12 +21,12 @@ android {
     defaultConfig {
         applicationId = "com.questgamemanager.quest_game_manager"
         minSdk = 29
-        targetSdk = 32
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
         ndk {
-            abiFilters += listOf("arm64-v8a")
+            abiFilters += listOf("arm64-v8a", "x86_64")
         }
     }
 

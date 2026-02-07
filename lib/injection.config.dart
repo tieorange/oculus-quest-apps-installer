@@ -26,6 +26,8 @@ import 'package:quest_game_manager/features/catalog/domain/usecases/search_games
     as _i259;
 import 'package:quest_game_manager/features/catalog/presentation/bloc/catalog_bloc.dart'
     as _i120;
+import 'package:quest_game_manager/features/config/data/datasources/config_local_datasource.dart'
+    as _i251;
 import 'package:quest_game_manager/features/config/data/datasources/config_remote_datasource.dart'
     as _i803;
 import 'package:quest_game_manager/features/config/data/repositories/config_repository_impl.dart'
@@ -51,10 +53,11 @@ extension GetItInjectableX on _i174.GetIt {
       environmentFilter,
     );
     final registerModule = _$RegisterModule();
-    gh.factory<_i261.SettingsCubit>(() => _i261.SettingsCubit());
     gh.factory<_i259.SearchGames>(() => _i259.SearchGames());
     gh.factory<_i505.DownloadsBloc>(() => _i505.DownloadsBloc());
     gh.lazySingleton<_i361.Dio>(() => registerModule.dio);
+    gh.lazySingleton<_i251.ConfigLocalDatasource>(
+        () => _i251.ConfigLocalDatasource());
     gh.lazySingleton<_i418.CatalogLocalDatasource>(
         () => _i418.CatalogLocalDatasource());
     gh.lazySingleton<_i803.ConfigRemoteDatasource>(
@@ -69,8 +72,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i751.GetGameCatalog(gh<_i361.CatalogRepository>()));
     gh.factory<_i751.GetCachedCatalog>(
         () => _i751.GetCachedCatalog(gh<_i361.CatalogRepository>()));
-    gh.factory<_i118.ConfigRepository>(
-        () => _i1022.ConfigRepositoryImpl(gh<_i803.ConfigRemoteDatasource>()));
+    gh.lazySingleton<_i118.ConfigRepository>(() => _i1022.ConfigRepositoryImpl(
+          gh<_i803.ConfigRemoteDatasource>(),
+          gh<_i251.ConfigLocalDatasource>(),
+        ));
     gh.factory<_i155.FetchConfig>(
         () => _i155.FetchConfig(gh<_i118.ConfigRepository>()));
     gh.factory<_i120.CatalogBloc>(() => _i120.CatalogBloc(
@@ -78,6 +83,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i751.GetGameCatalog>(),
           gh<_i259.SearchGames>(),
         ));
+    gh.factory<_i261.SettingsCubit>(
+        () => _i261.SettingsCubit(gh<_i118.ConfigRepository>()));
     return this;
   }
 }

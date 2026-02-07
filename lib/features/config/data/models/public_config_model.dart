@@ -19,4 +19,10 @@ class PublicConfigModel {
   /// Converts to domain entity with decoded password.
   PublicConfig toEntity() =>
       PublicConfig(baseUri: baseUri, password: utf8.decode(base64Decode(password)));
+
+  /// Converts to JSON map.
+  Map<String, dynamic> toJson() => {
+        'baseUri': baseUri,
+        'password': password,
+      };
 }

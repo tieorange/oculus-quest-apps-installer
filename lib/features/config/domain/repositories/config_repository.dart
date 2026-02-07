@@ -7,4 +7,5 @@ import 'package:quest_game_manager/features/config/domain/entities/public_config
 // ignore: one_member_abstracts
 abstract class ConfigRepository {
   Future<Either<Failure, PublicConfig>> fetchConfig();
+  Future<Either<Failure, Unit>> saveConfig(PublicConfig config);
 }

@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_slow_async_io
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -7,6 +8,7 @@ import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:quest_game_manager/core/constants/app_constants.dart';
 import 'package:quest_game_manager/core/error/exceptions.dart';
+import 'package:quest_game_manager/core/utils/app_logger.dart';
 import 'package:quest_game_manager/features/catalog/data/models/game_info_model.dart';
 import 'package:quest_game_manager/features/config/domain/entities/public_config.dart';
 
@@ -22,10 +24,40 @@ class CatalogRemoteDatasource {
     final metaPath = '${cacheDir.path}/${AppConstants.metaArchiveName}';
     final dataDir = await getApplicationDocumentsDirectory();
 
+    AppLogger.debug('Cache dir: ${cacheDir.path}', tag: 'CatalogDS');
+    AppLogger.debug('Data dir: ${dataDir.path}', tag: 'CatalogDS');
+
     // Download meta.7z
-    await _dio.download('${config.baseUri}/${AppConstants.metaArchiveName}', metaPath);
+    final baseUrl = config.baseUri.endsWith('/')
+        ? config.baseUri.substring(0, config.baseUri.length - 1)
+        : config.baseUri;
+    final downloadUrl = '$baseUrl/${AppConstants.metaArchiveName}';
+    AppLogger.info('Downloading meta archive from: $downloadUrl', tag: 'CatalogDS');
+    // Use rclone User-Agent to match standard client
+    final userAgent = 'rclone/v1.66.0';
+    AppLogger.debug('Using User-Agent: $userAgent', tag: 'CatalogDS');
+
+    final token = base64.encode(utf8.encode(':${config.password}'));
+    try {
+      await _dio.download(
+        downloadUrl,
+        metaPath,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic $token',
+            'User-Agent': userAgent,
+            'Accept': '*/*',
+          },
+        ),
+      );
+      AppLogger.info('Download complete: $metaPath', tag: 'CatalogDS');
+    } catch (e, st) {
+      AppLogger.error('Download failed', tag: 'CatalogDS', error: e, stackTrace: st);
+      rethrow;
+    }
 
     // Extract with 7za
+    AppLogger.info('Extracting archive with 7za...', tag: 'CatalogDS');
     final extractResult = await Process.run('7za', [
       'x',
       metaPath,
@@ -35,17 +67,27 @@ class CatalogRemoteDatasource {
     ]);
 
     if (extractResult.exitCode != 0) {
+      AppLogger.error(
+        'Extraction failed with exit code ${extractResult.exitCode}',
+        tag: 'CatalogDS',
+        error: extractResult.stderr,
+      );
       throw ExtractionException(message: 'Failed to extract meta.7z: ${extractResult.stderr}');
     }
+    AppLogger.info('Extraction complete', tag: 'CatalogDS');
 
     // Parse game list
     final gameListFile = File('${dataDir.path}/${AppConstants.gameListFileName}');
+    AppLogger.debug('Looking for game list at: ${gameListFile.path}', tag: 'CatalogDS');
     if (!await gameListFile.exists()) {
+      AppLogger.error('Game list file not found', tag: 'CatalogDS');
       throw const StorageException(message: 'Game list file not found');
     }
 
     final lines = await gameListFile.readAsLines();
+    AppLogger.info('Parsing ${lines.length} lines from game list', tag: 'CatalogDS');
     final games = <GameInfoModel>[];
+    var skipped = 0;
 
     for (var i = 1; i < lines.length; i++) {
       // Skip header
@@ -53,11 +95,13 @@ class CatalogRemoteDatasource {
       if (line.isEmpty) continue;
       try {
         games.add(GameInfoModel.fromCsvLine(line));
-      } catch (_) {
-        // Skip malformed lines
+      } catch (e) {
+        skipped++;
+        AppLogger.warning('Skipping malformed line $i: $e', tag: 'CatalogDS');
       }
     }
 
+    AppLogger.info('Parsed ${games.length} games ($skipped skipped)', tag: 'CatalogDS');
     return games;
   }
 
