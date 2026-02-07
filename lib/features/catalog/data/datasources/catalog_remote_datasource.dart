@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:quest_game_manager/core/constants/app_constants.dart';
@@ -57,24 +58,20 @@ class CatalogRemoteDatasource {
     }
 
     // Extract with 7za
-    AppLogger.info('Extracting archive with 7za...', tag: 'CatalogDS');
-    final extractResult = await Process.run('7za', [
-      'x',
-      metaPath,
-      '-aoa',
-      '-o${dataDir.path}',
-      '-p${config.password}',
-    ]);
+    AppLogger.info('Extracting archive via native channel...', tag: 'CatalogDS');
 
-    if (extractResult.exitCode != 0) {
-      AppLogger.error(
-        'Extraction failed with exit code ${extractResult.exitCode}',
-        tag: 'CatalogDS',
-        error: extractResult.stderr,
-      );
-      throw ExtractionException(message: 'Failed to extract meta.7z: ${extractResult.stderr}');
+    const channel = MethodChannel('com.questgamemanager.quest_game_manager/archive');
+    try {
+      await channel.invokeMethod<bool>('extract7z', {
+        'filePath': metaPath,
+        'outDir': dataDir.path,
+        'password': config.password,
+      });
+      AppLogger.info('Extraction complete', tag: 'CatalogDS');
+    } on PlatformException catch (e) {
+      AppLogger.error('Extraction failed: ${e.message}', tag: 'CatalogDS');
+      throw ExtractionException(message: 'Failed to extract meta.7z: ${e.message}');
     }
-    AppLogger.info('Extraction complete', tag: 'CatalogDS');
 
     // Parse game list
     final gameListFile = File('${dataDir.path}/${AppConstants.gameListFileName}');
