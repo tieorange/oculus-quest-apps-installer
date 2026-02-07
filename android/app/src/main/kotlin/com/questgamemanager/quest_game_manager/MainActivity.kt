@@ -9,11 +9,14 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.questgamemanager.quest_game_manager/archive"
+    private val ARCHIVE_CHANNEL = "com.questgamemanager.quest_game_manager/archive"
+    private val RCLONE_CHANNEL = "com.questgamemanager.quest_game_manager/rclone"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        
+        // Archive extraction channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ARCHIVE_CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "extract7z") {
                 val filePath = call.argument<String>("filePath")
                 val outDir = call.argument<String>("outDir")
@@ -30,6 +33,20 @@ class MainActivity : FlutterActivity() {
                     }.start()
                 } else {
                     result.error("InvalidArgs", "File path or output directory is null", null)
+                }
+            } else {
+                result.notImplemented()
+            }
+        }
+        
+        // Rclone channel - provides path to native library directory
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, RCLONE_CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method == "getNativeLibraryDir") {
+                try {
+                    val nativeLibDir = applicationInfo.nativeLibraryDir
+                    result.success(nativeLibDir)
+                } catch (e: Exception) {
+                    result.error("RcloneError", e.message, null)
                 }
             } else {
                 result.notImplemented()

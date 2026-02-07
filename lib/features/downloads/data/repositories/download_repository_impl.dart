@@ -17,23 +17,6 @@ class DownloadRepositoryImpl implements DownloadRepository {
   final DownloadRemoteDatasource _remoteDatasource;
 
   @override
-  Future<Either<Failure, List<(String, int)>>> listGameFiles(
-    String baseUri,
-    String gameId,
-  ) async {
-    try {
-      final files = await _remoteDatasource.listGameFiles(
-        baseUri: baseUri,
-        gameId: gameId,
-      );
-      return Right(files);
-    } catch (e, st) {
-      AppLogger.error('Failed to list game files', tag: 'DownloadRepo', error: e, stackTrace: st);
-      return Left(NetworkFailure(message: e.toString()));
-    }
-  }
-
-  @override
   Stream<DownloadTask> downloadGame(Game game, String baseUri, String password) {
     return _remoteDatasource.downloadGame(
       game: game,

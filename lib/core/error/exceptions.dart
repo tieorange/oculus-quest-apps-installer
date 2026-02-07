@@ -26,3 +26,8 @@ class InstallationException implements Exception {
   const InstallationException({required this.message});
   final String message;
 }
+
+class DownloadException implements Exception {
+  const DownloadException({required this.message});
+  final String message;
+}

@@ -18,6 +18,13 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    // Required to extract native libs (including rclone) from APK
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     defaultConfig {
         applicationId = "com.questgamemanager.quest_game_manager"
         minSdk = 29
@@ -25,8 +32,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
+        // Only arm64-v8a since rclone binary is arm64 only
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            abiFilters += listOf("arm64-v8a")
         }
     }
 

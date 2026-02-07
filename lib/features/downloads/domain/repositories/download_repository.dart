@@ -5,10 +5,6 @@ import 'package:quest_game_manager/features/downloads/domain/entities/download_t
 
 /// Repository interface for download operations.
 abstract class DownloadRepository {
-  Future<Either<Failure, List<(String filename, int sizeBytes)>>> listGameFiles(
-    String baseUri,
-    String gameId,
-  );
   Stream<DownloadTask> downloadGame(Game game, String baseUri, String password);
   Future<Either<Failure, void>> cancelDownload(String gameId);
   Future<Either<Failure, List<DownloadTask>>> getSavedQueue();

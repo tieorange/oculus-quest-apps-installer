@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -12,72 +13,24 @@ import 'package:quest_game_manager/features/catalog/domain/entities/game.dart';
 import 'package:quest_game_manager/features/downloads/domain/entities/download_task.dart';
 
 /// Remote datasource for downloading games.
+/// Uses Dio HTTP client with rclone User-Agent for Cloudflare compatibility.
+///
+/// Uses "blind download" approach without HEAD probing to avoid Cloudflare rate limiting.
 @lazySingleton
 class DownloadRemoteDatasource {
   DownloadRemoteDatasource(this._dio);
   final Dio _dio;
 
-  CancelToken? _currentCancelToken;
+  bool _isCancelled = false;
+  CancelToken? _cancelToken;
+
+  // Same User-Agent as rclone/rookie to bypass WAF
   static const _userAgent = 'rclone/v1.66.0';
 
-  /// Lists files available for a game on the remote server.
-  /// Returns a list of (filename, sizeBytes) tuples.
-  Future<List<(String, int)>> listGameFiles({
-    required String baseUri,
-    required String gameId,
-  }) async {
-    AppLogger.debug('listGameFiles called for $gameId', tag: 'DownloadDS');
-    final url = '${_normalizeBaseUri(baseUri)}$gameId/';
-    AppLogger.info('Fetching file list from: $url', tag: 'DownloadDS');
-
-    try {
-      final response = await _dio.get<String>(
-        url,
-        options: Options(
-          headers: {
-            'User-Agent': _userAgent,
-            'Accept': '*/*',
-          },
-          responseType: ResponseType.plain,
-        ),
-      );
-
-      final html = response.data ?? '';
-      AppLogger.debug('Received HTML response (${html.length} chars)', tag: 'DownloadDS');
-      AppLogger.debug('HTML Content: $html', tag: 'DownloadDS');
-      return _parseDirectoryListing(html);
-    } on DioException catch (e) {
-      AppLogger.error('Failed to list game files', tag: 'DownloadDS', error: e);
-      throw NetworkException(message: 'Failed to list game files: ${e.message}');
-    } catch (e, st) {
-      AppLogger.error('Unexpected error in listGameFiles',
-          tag: 'DownloadDS', error: e, stackTrace: st);
-      rethrow;
-    }
-  }
-
-  /// Parses HTML directory listing from the server.
-  /// Format: <pre> block with lines like "filename    date    size"
-  List<(String, int)> _parseDirectoryListing(String html) {
-    final files = <(String, int)>[];
-    // Match files like: a1b2c3d4.7z.001   date   12345
-    final regex = RegExp(
-      r'(?:\.\.\/)?([0-9a-f]+\.7z\.\d+)\s+.*?\s+(\d+)\s*$',
-      multiLine: true,
-    );
-
-    for (final match in regex.allMatches(html)) {
-      final filename = match.group(1)!;
-      final size = int.parse(match.group(2)!);
-      files.add((filename, size));
-    }
-
-    AppLogger.debug('Found ${files.length} archive parts', tag: 'DownloadDS');
-    return files;
-  }
-
   /// Downloads a game and emits progress updates.
-  /// Returns a stream of [DownloadTask] with updated progress.
+  ///
+  /// Uses blind download approach - attempts to download files sequentially
+  /// without HEAD probing to avoid Cloudflare rate limiting.
   Stream<DownloadTask> downloadGame({
     required Game game,
     required String baseUri,
@@ -86,6 +39,8 @@ class DownloadRemoteDatasource {
     final gameId = HashUtils.computeGameId(game.releaseName);
     AppLogger.info('Starting download for: ${game.name}', tag: 'DownloadDS');
     AppLogger.debug('Game ID: $gameId', tag: 'DownloadDS');
+    AppLogger.debug('Base URI: $baseUri', tag: 'DownloadDS');
+    AppLogger.debug('User-Agent: $_userAgent', tag: 'DownloadDS');
 
     final task = DownloadTask(
       game: game,
@@ -93,152 +48,226 @@ class DownloadRemoteDatasource {
       status: DownloadStatus.queued,
     );
 
+    _isCancelled = false;
+    _cancelToken = CancelToken();
+
     yield task.copyWith(status: DownloadStatus.downloading);
 
     try {
-      // 1. List files
-      AppLogger.debug('Calling listGameFiles for gameId: $gameId', tag: 'DownloadDS');
-      final files = await listGameFiles(baseUri: baseUri, gameId: gameId);
-      AppLogger.debug('listGameFiles returned ${files.length} files', tag: 'DownloadDS');
-
-      if (files.isEmpty) {
-        throw const NetworkException(message: 'No files found for game');
-      }
-
-      final totalBytes = files.fold<int>(0, (sum, f) => sum + f.$2);
-      var downloadedBytes = 0;
-
-      // 2. Prepare cache directory
+      // 1. Prepare cache directory for download
       final cacheDir = await getApplicationCacheDirectory();
       final downloadDir = Directory('${cacheDir.path}/$gameId');
       if (!await downloadDir.exists()) {
         await downloadDir.create(recursive: true);
       }
 
-      _currentCancelToken = CancelToken();
-      final baseUrl = _normalizeBaseUri(baseUri);
+      AppLogger.debug('Download dir: ${downloadDir.path}', tag: 'DownloadDS');
+
+      // 2. Prepare headers (same as catalog download)
+      final normalizedBaseUri = _normalizeBaseUri(baseUri);
+      final authToken = base64.encode(utf8.encode(':$password'));
+      final headers = {
+        'Authorization': 'Basic $authToken',
+        'User-Agent': _userAgent,
+        'Accept': '*/*',
+      };
+
+      // 3. Download files using blind approach (no HEAD probing)
+      // Try to download .7z.001, .7z.002, etc. until we get a 404
+      var partNumber = 1;
+      var totalDownloaded = 0;
       final startTime = DateTime.now();
+      final downloadedFiles = <String>[];
 
-      // 3. Download each file part
-      for (final (filename, fileSize) in files) {
-        final url = '$baseUrl$gameId/$filename';
-        final filePath = '${downloadDir.path}/$filename';
-        final file = File(filePath);
+      AppLogger.info('Starting blind download (no probing)...', tag: 'DownloadDS');
 
-        // Check for resume support
-        var startByte = 0;
-        if (await file.exists()) {
-          startByte = await file.length();
-          if (startByte >= fileSize) {
-            // File already downloaded
-            downloadedBytes += fileSize;
-            continue;
-          }
-          downloadedBytes += startByte;
-        }
+      while (!_isCancelled) {
+        final fileName = '$gameId.7z.${partNumber.toString().padLeft(3, '0')}';
+        final fileUrl = '$normalizedBaseUri$gameId/$fileName';
+        final filePath = '${downloadDir.path}/$fileName';
 
-        AppLogger.debug(
-            'Downloading $filename (${startByte > 0 ? "resume from $startByte" : "new"})',
-            tag: 'DownloadDS');
+        AppLogger.debug('Trying to download: $fileName', tag: 'DownloadDS');
 
-        await _dio.download(
-          url,
-          filePath,
-          cancelToken: _currentCancelToken,
-          deleteOnError: false,
-          options: Options(
-            headers: {
-              'User-Agent': _userAgent,
-              if (startByte > 0) 'Range': 'bytes=$startByte-',
+        try {
+          var lastProgress = 0.0;
+
+          await _dio.download(
+            fileUrl,
+            filePath,
+            cancelToken: _cancelToken,
+            options: Options(
+              headers: headers,
+              // Accept 2xx as success, throw on 4xx/5xx
+              validateStatus: (status) => status != null && status >= 200 && status < 300,
+            ),
+            onReceiveProgress: (received, total) {
+              if (total > 0) {
+                final progress = received / total;
+                // Log every 10% progress
+                if (progress - lastProgress >= 0.1) {
+                  lastProgress = progress;
+                  AppLogger.debug(
+                    'Part $partNumber: ${(progress * 100).toStringAsFixed(0)}% (${_formatBytes(received)}/${_formatBytes(total)})',
+                    tag: 'DownloadDS',
+                  );
+                }
+              }
             },
-          ),
-          onReceiveProgress: (received, total) {
-            // Progress is calculated after each file completes
-          },
-        );
+          );
 
-        downloadedBytes += fileSize - startByte;
+          // Success! File downloaded
+          final fileSize = await File(filePath).length();
+          totalDownloaded += fileSize;
+          downloadedFiles.add(fileName);
 
-        final progress = downloadedBytes / totalBytes;
-        final elapsed = DateTime.now().difference(startTime).inMilliseconds;
-        final speed = elapsed > 0 ? (downloadedBytes / elapsed) * 1000 : 0.0;
+          AppLogger.info(
+            'Downloaded: $fileName (${_formatBytes(fileSize)})',
+            tag: 'DownloadDS',
+          );
 
-        yield task.copyWith(
-          status: DownloadStatus.downloading,
-          progress: progress,
-          bytesReceived: downloadedBytes,
-          totalBytes: totalBytes,
-          speedBytesPerSecond: speed,
+          // Emit progress update
+          yield task.copyWith(
+            status: DownloadStatus.downloading,
+            progress: 0.5 * (partNumber / 10).clamp(0, 0.5), // Estimate progress
+            bytesReceived: totalDownloaded,
+            speedBytesPerSecond:
+                totalDownloaded / (DateTime.now().difference(startTime).inMilliseconds / 1000),
+          );
+
+          partNumber++;
+
+          // Safety limit
+          if (partNumber > 999) {
+            AppLogger.warning('Reached max parts limit (999)', tag: 'DownloadDS');
+            break;
+          }
+        } on DioException catch (e) {
+          if (e.response?.statusCode == 404) {
+            // File doesn't exist - we've downloaded all parts
+            AppLogger.info('No more parts (404 on part $partNumber)', tag: 'DownloadDS');
+            break;
+          } else if (e.response?.statusCode == 403) {
+            if (downloadedFiles.isEmpty) {
+              // First file blocked - this is a real error
+              AppLogger.error(
+                '403 Forbidden on first file - access blocked',
+                tag: 'DownloadDS',
+              );
+              throw const DownloadException(
+                message: 'Access forbidden (403) - server blocked download',
+              );
+            }
+            // Already downloaded some files, 403 might mean no more parts
+            // (Cloudflare sometimes returns 403 instead of 404)
+            AppLogger.info(
+              '403 after ${downloadedFiles.length} files - assuming no more parts',
+              tag: 'DownloadDS',
+            );
+            break;
+          } else if (e.type == DioExceptionType.cancel) {
+            AppLogger.info('Download cancelled', tag: 'DownloadDS');
+            yield task.copyWith(status: DownloadStatus.paused);
+            return;
+          } else {
+            // Other error - rethrow
+            rethrow;
+          }
+        }
+      }
+
+      if (_isCancelled) {
+        yield task.copyWith(status: DownloadStatus.paused);
+        return;
+      }
+
+      if (downloadedFiles.isEmpty) {
+        throw const DownloadException(
+          message: 'No game files could be downloaded',
         );
       }
 
-      // 4. Extraction phase
-      yield task.copyWith(
-        status: DownloadStatus.extracting,
-        progress: 1.0,
-        bytesReceived: totalBytes,
-        totalBytes: totalBytes,
+      AppLogger.info(
+        'Downloaded ${downloadedFiles.length} parts, total: ${_formatBytes(totalDownloaded)}',
+        tag: 'DownloadDS',
       );
 
-      // Find the first .7z.001 file
-      final archiveFile = files.firstWhere((f) => f.$1.endsWith('.7z.001'));
-      final archivePath = '${downloadDir.path}/${archiveFile.$1}';
-      final dataDir = await getApplicationDocumentsDirectory();
+      // 4. Find the .7z.001 file for extraction
+      final archiveFile = File('${downloadDir.path}/${downloadedFiles.first}');
+      if (!await archiveFile.exists()) {
+        throw const ExtractionException(
+          message: 'Archive file not found after download',
+        );
+      }
 
-      await _extract7z(archivePath, dataDir.path, password);
+      AppLogger.info('Starting extraction: ${archiveFile.path}', tag: 'DownloadDS');
+
+      // 5. Extraction phase
+      yield task.copyWith(
+        status: DownloadStatus.extracting,
+        progress: 0.5,
+      );
+
+      const channel = MethodChannel('com.questgamemanager.quest_game_manager/archive');
+      try {
+        await channel.invokeMethod<bool>('extract7z', {
+          'filePath': archiveFile.path,
+          'outDir': downloadDir.path,
+          'password': password,
+        });
+        AppLogger.info('Extraction complete', tag: 'DownloadDS');
+      } on PlatformException catch (e) {
+        AppLogger.error('Extraction failed: ${e.message}', tag: 'DownloadDS');
+        throw ExtractionException(message: 'Extraction failed: ${e.message}');
+      }
+
+      // 6. Clean up archive files
+      await _cleanupArchiveFiles(downloadDir);
 
       yield task.copyWith(
         status: DownloadStatus.completed,
         progress: 1.0,
-        bytesReceived: totalBytes,
-        totalBytes: totalBytes,
       );
-
-      // 5. Cleanup archive files
-      try {
-        await downloadDir.delete(recursive: true);
-        AppLogger.info('Cleaned up download cache', tag: 'DownloadDS');
-      } catch (e) {
-        AppLogger.warning('Failed to cleanup cache: $e', tag: 'DownloadDS');
-      }
-    } on DioException catch (e) {
-      if (CancelToken.isCancel(e)) {
-        yield task.copyWith(status: DownloadStatus.paused);
-      } else {
-        AppLogger.error('Download failed', tag: 'DownloadDS', error: e);
-        yield task.copyWith(status: DownloadStatus.failed);
-      }
     } catch (e, st) {
       AppLogger.error('Download failed', tag: 'DownloadDS', error: e, stackTrace: st);
-      yield task.copyWith(status: DownloadStatus.failed);
+      yield task.copyWith(
+        status: DownloadStatus.failed,
+      );
     }
+  }
+
+  /// Normalizes the base URI to ensure it ends with a slash.
+  String _normalizeBaseUri(String uri) {
+    return uri.endsWith('/') ? uri : '$uri/';
+  }
+
+  /// Cleans up archive files after extraction.
+  Future<void> _cleanupArchiveFiles(Directory dir) async {
+    AppLogger.debug('Cleaning up archive files...', tag: 'DownloadDS');
+    try {
+      await for (final entity in dir.list()) {
+        if (entity is File && entity.path.contains('.7z.')) {
+          await entity.delete();
+          AppLogger.debug('Deleted: ${entity.path}', tag: 'DownloadDS');
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('Cleanup failed: $e', tag: 'DownloadDS');
+    }
+  }
+
+  /// Formats bytes into human-readable string.
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
   }
 
   /// Cancels the current download.
   void cancelDownload() {
-    _currentCancelToken?.cancel('User cancelled');
-    _currentCancelToken = null;
-  }
-
-  /// Extracts a 7z archive using native channel.
-  Future<void> _extract7z(String archivePath, String outDir, String password) async {
-    AppLogger.info('Extracting archive: $archivePath', tag: 'DownloadDS');
-
-    const channel = MethodChannel('com.questgamemanager.quest_game_manager/archive');
-    try {
-      await channel.invokeMethod<bool>('extract7z', {
-        'filePath': archivePath,
-        'outDir': outDir,
-        'password': password,
-      });
-      AppLogger.info('Extraction complete', tag: 'DownloadDS');
-    } catch (e) {
-      AppLogger.error('Extraction failed: $e', tag: 'DownloadDS');
-      throw ExtractionException(message: 'Failed to extract archive: $e');
-    }
-  }
-
-  String _normalizeBaseUri(String uri) {
-    return uri.endsWith('/') ? uri : '$uri/';
+    _isCancelled = true;
+    _cancelToken?.cancel('User cancelled');
   }
 }
