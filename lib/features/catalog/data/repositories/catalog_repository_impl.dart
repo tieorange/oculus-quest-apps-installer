@@ -72,6 +72,18 @@ class CatalogRepositoryImpl implements CatalogRepository {
   }
 
   @override
+  Future<DateTime?> getCacheAge() async {
+    return _localDatasource.getCacheAge();
+  }
+
+  @override
+  Future<bool> isCacheStale() async {
+    final cacheAge = await getCacheAge();
+    if (cacheAge == null) return true;
+    return DateTime.now().difference(cacheAge).inMinutes >= kCacheTtlMinutes;
+  }
+
+  @override
   Future<Either<Failure, String>> getGameThumbnailPath(String packageName) async {
     try {
       final path = await _remoteDatasource.getThumbnailPath(packageName);

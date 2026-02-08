@@ -83,6 +83,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i751.GetGameCatalog(gh<_i361.CatalogRepository>()));
     gh.factory<_i751.GetCachedCatalog>(
         () => _i751.GetCachedCatalog(gh<_i361.CatalogRepository>()));
+    gh.factory<_i751.IsCacheStale>(
+        () => _i751.IsCacheStale(gh<_i361.CatalogRepository>()));
     gh.lazySingleton<_i118.ConfigRepository>(() => _i1022.ConfigRepositoryImpl(
           gh<_i803.ConfigRemoteDatasource>(),
           gh<_i251.ConfigLocalDatasource>(),
@@ -93,13 +95,15 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i155.FetchConfig>(
         () => _i155.FetchConfig(gh<_i118.ConfigRepository>()));
+    gh.factory<_i261.SettingsCubit>(
+        () => _i261.SettingsCubit(gh<_i118.ConfigRepository>()));
     gh.factory<_i120.CatalogBloc>(() => _i120.CatalogBloc(
           gh<_i155.FetchConfig>(),
           gh<_i751.GetGameCatalog>(),
+          gh<_i751.GetCachedCatalog>(),
+          gh<_i751.IsCacheStale>(),
           gh<_i259.SearchGames>(),
         ));
-    gh.factory<_i261.SettingsCubit>(
-        () => _i261.SettingsCubit(gh<_i118.ConfigRepository>()));
     return this;
   }
 }

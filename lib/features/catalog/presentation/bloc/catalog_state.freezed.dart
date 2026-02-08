@@ -25,9 +25,12 @@ mixin _$CatalogState {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)
         loaded,
     required TResult Function(Failure failure) error,
   }) =>
@@ -41,9 +44,12 @@ mixin _$CatalogState {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult? Function(Failure failure)? error,
   }) =>
@@ -57,9 +63,12 @@ mixin _$CatalogState {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult Function(Failure failure)? error,
     required TResult orElse(),
@@ -155,9 +164,12 @@ class _$CatalogInitialImpl implements CatalogInitial {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)
         loaded,
     required TResult Function(Failure failure) error,
   }) {
@@ -174,9 +186,12 @@ class _$CatalogInitialImpl implements CatalogInitial {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult? Function(Failure failure)? error,
   }) {
@@ -193,9 +208,12 @@ class _$CatalogInitialImpl implements CatalogInitial {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult Function(Failure failure)? error,
     required TResult orElse(),
@@ -293,9 +311,12 @@ class _$CatalogLoadingImpl implements CatalogLoading {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)
         loaded,
     required TResult Function(Failure failure) error,
   }) {
@@ -312,9 +333,12 @@ class _$CatalogLoadingImpl implements CatalogLoading {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult? Function(Failure failure)? error,
   }) {
@@ -331,9 +355,12 @@ class _$CatalogLoadingImpl implements CatalogLoading {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult Function(Failure failure)? error,
     required TResult orElse(),
@@ -397,9 +424,12 @@ abstract class _$$CatalogLoadedImplCopyWith<$Res> {
       List<Game> filteredGames,
       String searchQuery,
       SortType sortType,
-      GameStatusFilter filter,
+      GameStatusFilter statusFilter,
       Set<String> installedPackages,
-      int freeSpaceMb});
+      SizeFilter sizeFilter,
+      RecencyFilter recencyFilter,
+      int freeSpaceMb,
+      bool isRefreshing});
 }
 
 /// @nodoc
@@ -417,9 +447,12 @@ class __$$CatalogLoadedImplCopyWithImpl<$Res>
     Object? filteredGames = null,
     Object? searchQuery = null,
     Object? sortType = null,
-    Object? filter = null,
+    Object? statusFilter = null,
     Object? installedPackages = null,
+    Object? sizeFilter = null,
+    Object? recencyFilter = null,
     Object? freeSpaceMb = null,
+    Object? isRefreshing = null,
   }) {
     return _then(_$CatalogLoadedImpl(
       games: null == games
@@ -438,18 +471,30 @@ class __$$CatalogLoadedImplCopyWithImpl<$Res>
           ? _value.sortType
           : sortType // ignore: cast_nullable_to_non_nullable
               as SortType,
-      filter: null == filter
-          ? _value.filter
-          : filter // ignore: cast_nullable_to_non_nullable
+      statusFilter: null == statusFilter
+          ? _value.statusFilter
+          : statusFilter // ignore: cast_nullable_to_non_nullable
               as GameStatusFilter,
       installedPackages: null == installedPackages
           ? _value._installedPackages
           : installedPackages // ignore: cast_nullable_to_non_nullable
               as Set<String>,
+      sizeFilter: null == sizeFilter
+          ? _value.sizeFilter
+          : sizeFilter // ignore: cast_nullable_to_non_nullable
+              as SizeFilter,
+      recencyFilter: null == recencyFilter
+          ? _value.recencyFilter
+          : recencyFilter // ignore: cast_nullable_to_non_nullable
+              as RecencyFilter,
       freeSpaceMb: null == freeSpaceMb
           ? _value.freeSpaceMb
           : freeSpaceMb // ignore: cast_nullable_to_non_nullable
               as int,
+      isRefreshing: null == isRefreshing
+          ? _value.isRefreshing
+          : isRefreshing // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -462,9 +507,12 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
       required final List<Game> filteredGames,
       required this.searchQuery,
       required this.sortType,
-      required this.filter,
+      required this.statusFilter,
       required final Set<String> installedPackages,
-      this.freeSpaceMb = 0})
+      this.sizeFilter = SizeFilter.all,
+      this.recencyFilter = RecencyFilter.all,
+      this.freeSpaceMb = 0,
+      this.isRefreshing = false})
       : _games = games,
         _filteredGames = filteredGames,
         _installedPackages = installedPackages;
@@ -490,7 +538,7 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
   @override
   final SortType sortType;
   @override
-  final GameStatusFilter filter;
+  final GameStatusFilter statusFilter;
   final Set<String> _installedPackages;
   @override
   Set<String> get installedPackages {
@@ -502,11 +550,22 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
 
   @override
   @JsonKey()
+  final SizeFilter sizeFilter;
+  @override
+  @JsonKey()
+  final RecencyFilter recencyFilter;
+  @override
+  @JsonKey()
   final int freeSpaceMb;
+
+  /// True when background refresh is in progress (stale-while-revalidate).
+  @override
+  @JsonKey()
+  final bool isRefreshing;
 
   @override
   String toString() {
-    return 'CatalogState.loaded(games: $games, filteredGames: $filteredGames, searchQuery: $searchQuery, sortType: $sortType, filter: $filter, installedPackages: $installedPackages, freeSpaceMb: $freeSpaceMb)';
+    return 'CatalogState.loaded(games: $games, filteredGames: $filteredGames, searchQuery: $searchQuery, sortType: $sortType, statusFilter: $statusFilter, installedPackages: $installedPackages, sizeFilter: $sizeFilter, recencyFilter: $recencyFilter, freeSpaceMb: $freeSpaceMb, isRefreshing: $isRefreshing)';
   }
 
   @override
@@ -521,11 +580,18 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
                 other.searchQuery == searchQuery) &&
             (identical(other.sortType, sortType) ||
                 other.sortType == sortType) &&
-            (identical(other.filter, filter) || other.filter == filter) &&
+            (identical(other.statusFilter, statusFilter) ||
+                other.statusFilter == statusFilter) &&
             const DeepCollectionEquality()
                 .equals(other._installedPackages, _installedPackages) &&
+            (identical(other.sizeFilter, sizeFilter) ||
+                other.sizeFilter == sizeFilter) &&
+            (identical(other.recencyFilter, recencyFilter) ||
+                other.recencyFilter == recencyFilter) &&
             (identical(other.freeSpaceMb, freeSpaceMb) ||
-                other.freeSpaceMb == freeSpaceMb));
+                other.freeSpaceMb == freeSpaceMb) &&
+            (identical(other.isRefreshing, isRefreshing) ||
+                other.isRefreshing == isRefreshing));
   }
 
   @override
@@ -535,9 +601,12 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
       const DeepCollectionEquality().hash(_filteredGames),
       searchQuery,
       sortType,
-      filter,
+      statusFilter,
       const DeepCollectionEquality().hash(_installedPackages),
-      freeSpaceMb);
+      sizeFilter,
+      recencyFilter,
+      freeSpaceMb,
+      isRefreshing);
 
   @JsonKey(ignore: true)
   @override
@@ -555,14 +624,26 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)
         loaded,
     required TResult Function(Failure failure) error,
   }) {
-    return loaded(games, filteredGames, searchQuery, sortType, filter,
-        installedPackages, freeSpaceMb);
+    return loaded(
+        games,
+        filteredGames,
+        searchQuery,
+        sortType,
+        statusFilter,
+        installedPackages,
+        sizeFilter,
+        recencyFilter,
+        freeSpaceMb,
+        isRefreshing);
   }
 
   @override
@@ -575,14 +656,26 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult? Function(Failure failure)? error,
   }) {
-    return loaded?.call(games, filteredGames, searchQuery, sortType, filter,
-        installedPackages, freeSpaceMb);
+    return loaded?.call(
+        games,
+        filteredGames,
+        searchQuery,
+        sortType,
+        statusFilter,
+        installedPackages,
+        sizeFilter,
+        recencyFilter,
+        freeSpaceMb,
+        isRefreshing);
   }
 
   @override
@@ -595,16 +688,28 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult Function(Failure failure)? error,
     required TResult orElse(),
   }) {
     if (loaded != null) {
-      return loaded(games, filteredGames, searchQuery, sortType, filter,
-          installedPackages, freeSpaceMb);
+      return loaded(
+          games,
+          filteredGames,
+          searchQuery,
+          sortType,
+          statusFilter,
+          installedPackages,
+          sizeFilter,
+          recencyFilter,
+          freeSpaceMb,
+          isRefreshing);
     }
     return orElse();
   }
@@ -653,17 +758,25 @@ abstract class CatalogLoaded implements CatalogState {
       required final List<Game> filteredGames,
       required final String searchQuery,
       required final SortType sortType,
-      required final GameStatusFilter filter,
+      required final GameStatusFilter statusFilter,
       required final Set<String> installedPackages,
-      final int freeSpaceMb}) = _$CatalogLoadedImpl;
+      final SizeFilter sizeFilter,
+      final RecencyFilter recencyFilter,
+      final int freeSpaceMb,
+      final bool isRefreshing}) = _$CatalogLoadedImpl;
 
   List<Game> get games;
   List<Game> get filteredGames;
   String get searchQuery;
   SortType get sortType;
-  GameStatusFilter get filter;
+  GameStatusFilter get statusFilter;
   Set<String> get installedPackages;
+  SizeFilter get sizeFilter;
+  RecencyFilter get recencyFilter;
   int get freeSpaceMb;
+
+  /// True when background refresh is in progress (stale-while-revalidate).
+  bool get isRefreshing;
   @JsonKey(ignore: true)
   _$$CatalogLoadedImplCopyWith<_$CatalogLoadedImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -750,9 +863,12 @@ class _$CatalogErrorImpl implements CatalogError {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)
         loaded,
     required TResult Function(Failure failure) error,
   }) {
@@ -769,9 +885,12 @@ class _$CatalogErrorImpl implements CatalogError {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult? Function(Failure failure)? error,
   }) {
@@ -788,9 +907,12 @@ class _$CatalogErrorImpl implements CatalogError {
             List<Game> filteredGames,
             String searchQuery,
             SortType sortType,
-            GameStatusFilter filter,
+            GameStatusFilter statusFilter,
             Set<String> installedPackages,
-            int freeSpaceMb)?
+            SizeFilter sizeFilter,
+            RecencyFilter recencyFilter,
+            int freeSpaceMb,
+            bool isRefreshing)?
         loaded,
     TResult Function(Failure failure)? error,
     required TResult orElse(),

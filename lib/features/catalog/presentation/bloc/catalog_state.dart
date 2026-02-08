@@ -15,9 +15,14 @@ sealed class CatalogState with _$CatalogState {
     required List<Game> filteredGames,
     required String searchQuery,
     required SortType sortType,
-    required GameStatusFilter filter,
+    required GameStatusFilter statusFilter,
     required Set<String> installedPackages,
+    @Default(SizeFilter.all) SizeFilter sizeFilter,
+    @Default(RecencyFilter.all) RecencyFilter recencyFilter,
     @Default(0) int freeSpaceMb,
+
+    /// True when background refresh is in progress (stale-while-revalidate).
+    @Default(false) bool isRefreshing,
   }) = CatalogLoaded;
   const factory CatalogState.error(Failure failure) = CatalogError;
 }
