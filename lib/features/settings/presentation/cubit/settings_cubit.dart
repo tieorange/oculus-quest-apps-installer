@@ -28,7 +28,7 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   Future<void> saveConfig(String jsonString) async {
-    emit(state.copyWith(configSaveStatus: ConfigSaveStatus.loading, configSaveError: null));
+    emit(state.copyWith(configSaveStatus: ConfigSaveStatus.loading));
     try {
       final jsonMap = json.decode(jsonString) as Map<String, dynamic>;
       final model = PublicConfigModel.fromJson(jsonMap);
@@ -36,22 +36,30 @@ class SettingsCubit extends Cubit<SettingsState> {
 
       final result = await _configRepository.saveConfig(entity);
       result.fold(
-        (failure) => emit(state.copyWith(
-          configSaveStatus: ConfigSaveStatus.failure,
-          configSaveError: failure.userMessage,
-        )),
-        (_) => emit(state.copyWith(configSaveStatus: ConfigSaveStatus.success)),
+        (failure) => emit(
+          state.copyWith(
+            configSaveStatus: ConfigSaveStatus.failure,
+            configSaveError: failure.userMessage,
+          ),
+        ),
+        (_) => emit(
+          state.copyWith(
+            configSaveStatus: ConfigSaveStatus.success,
+          ),
+        ),
       );
     } catch (e) {
-      emit(state.copyWith(
-        configSaveStatus: ConfigSaveStatus.failure,
-        configSaveError: 'Invalid JSON: $e',
-      ));
+      emit(
+        state.copyWith(
+          configSaveStatus: ConfigSaveStatus.failure,
+          configSaveError: 'Invalid JSON: $e',
+        ),
+      );
     }
   }
 
   void resetConfigSaveStatus() {
-    emit(state.copyWith(configSaveStatus: ConfigSaveStatus.initial, configSaveError: null));
+    emit(state.copyWith(configSaveStatus: ConfigSaveStatus.initial));
   }
 }
 

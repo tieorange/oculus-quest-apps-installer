@@ -38,13 +38,13 @@ class DownloadRepositoryImpl implements DownloadRepository {
 
   @override
   Future<Either<Failure, List<DownloadTask>>> getSavedQueue() async {
-    // TODO: Implement with Hive for persistent queue
+    // TODO(anduser): Implement with Hive for persistent queue
     return const Right([]);
   }
 
   @override
   Future<Either<Failure, void>> saveQueue(List<DownloadTask> queue) async {
-    // TODO: Implement with Hive for persistent queue
+    // TODO(anduser): Implement with Hive for persistent queue
     return const Right(null);
   }
 

@@ -49,14 +49,18 @@ class RcloneService {
 
       // Create empty rclone config file
       final configFile = File('${appDir.path}/rclone.conf');
-      if (!await configFile.exists()) {
-        await configFile.writeAsString('# rclone config\n');
+      if (!configFile.existsSync()) {
+        configFile.writeAsStringSync('# rclone config\n');
       }
 
       AppLogger.info('Environment prepared, HOME: $_homeDir', tag: 'RcloneService');
     } catch (e, st) {
-      AppLogger.error('Failed to prepare environment',
-          tag: 'RcloneService', error: e, stackTrace: st);
+      AppLogger.error(
+        'Failed to prepare environment',
+        tag: 'RcloneService',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -74,8 +78,12 @@ class RcloneService {
       AppLogger.info('Resolved $hostname -> $ip', tag: 'RcloneService');
       return ip;
     } catch (e, st) {
-      AppLogger.error('DNS resolution failed for $hostname',
-          tag: 'RcloneService', error: e, stackTrace: st);
+      AppLogger.error(
+        'DNS resolution failed for $hostname',
+        tag: 'RcloneService',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -97,7 +105,7 @@ class RcloneService {
 
       // Verify the file exists
       final file = File(_binaryPath!);
-      if (!await file.exists()) {
+      if (!file.existsSync()) {
         throw StateError('Rclone binary not found at: $_binaryPath');
       }
 
@@ -292,7 +300,7 @@ class RcloneService {
   void cancel() {
     if (_currentProcess != null) {
       AppLogger.info('Cancelling rclone process', tag: 'RcloneService');
-      _currentProcess!.kill(ProcessSignal.sigterm);
+      _currentProcess!.kill();
       _currentProcess = null;
     }
   }

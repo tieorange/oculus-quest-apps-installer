@@ -14,8 +14,7 @@ abstract class RegisterModule {
         receiveTimeout: AppConstants.receiveTimeout,
         headers: {'User-Agent': AppConstants.userAgent},
       ),
-    );
-    dio.httpClientAdapter = NativeAdapter();
+    )..httpClientAdapter = NativeAdapter();
     return dio;
   }
 }

@@ -57,8 +57,8 @@ class DownloadRemoteDatasource {
       // 1. Prepare cache directory for download
       final cacheDir = await getApplicationCacheDirectory();
       final downloadDir = Directory('${cacheDir.path}/$gameId');
-      if (!await downloadDir.exists()) {
-        await downloadDir.create(recursive: true);
+      if (!downloadDir.existsSync()) {
+        downloadDir.createSync(recursive: true);
       }
 
       AppLogger.debug('Download dir: ${downloadDir.path}', tag: 'DownloadDS');
@@ -193,7 +193,7 @@ class DownloadRemoteDatasource {
 
       // 4. Find the .7z.001 file for extraction
       final archiveFile = File('${downloadDir.path}/${downloadedFiles.first}');
-      if (!await archiveFile.exists()) {
+      if (!archiveFile.existsSync()) {
         throw const ExtractionException(
           message: 'Archive file not found after download',
         );
@@ -225,7 +225,7 @@ class DownloadRemoteDatasource {
 
       yield task.copyWith(
         status: DownloadStatus.completed,
-        progress: 1.0,
+        progress: 1,
       );
     } catch (e, st) {
       AppLogger.error('Download failed', tag: 'DownloadDS', error: e, stackTrace: st);

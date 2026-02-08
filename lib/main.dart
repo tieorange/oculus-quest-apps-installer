@@ -10,8 +10,9 @@ Future<void> main() async {
 
   // Initialize Hive for local storage
   await Hive.initFlutter();
-  Hive.registerAdapter(GameInfoModelAdapter());
-  Hive.registerAdapter(CacheMetaModelAdapter());
+  Hive
+    ..registerAdapter(GameInfoModelAdapter())
+    ..registerAdapter(CacheMetaModelAdapter());
 
   // Configure dependency injection
   await configureDependencies();

@@ -160,8 +160,9 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
       _downloadRepository.downloadGame(task.game, config.baseUri, config.password),
       onData: (updatedTask) {
         AppLogger.debug(
-            'Received task update: status=${updatedTask.status}, progress=${updatedTask.progress}',
-            tag: 'DownloadsBloc');
+          'Received task update: status=${updatedTask.status}, progress=${updatedTask.progress}',
+          tag: 'DownloadsBloc',
+        );
 
         // Update task in queue
         final idx = _queue.indexWhere((t) => t.gameId == updatedTask.gameId);
@@ -175,8 +176,12 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
         );
       },
       onError: (Object error, StackTrace stackTrace) {
-        AppLogger.error('Download error in stream',
-            tag: 'DownloadsBloc', error: error, stackTrace: stackTrace);
+        AppLogger.error(
+          'Download error in stream',
+          tag: 'DownloadsBloc',
+          error: error,
+          stackTrace: stackTrace,
+        );
 
         final idx = _queue.indexWhere((t) => t.gameId == task.gameId);
         if (idx != -1) {
