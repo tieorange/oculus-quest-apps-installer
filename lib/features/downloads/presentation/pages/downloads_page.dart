@@ -25,7 +25,7 @@ class DownloadsPage extends StatelessWidget {
               final hasActive = state.queue.any((t) =>
                   t.status == DownloadStatus.downloading ||
                   t.status == DownloadStatus.extracting ||
-                  t.status == DownloadStatus.installing);
+                  t.status == DownloadStatus.installing,);
               final hasPaused = state.queue.any((t) => t.status == DownloadStatus.paused);
 
               return Row(

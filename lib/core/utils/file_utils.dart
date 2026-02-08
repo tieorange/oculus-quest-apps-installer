@@ -73,7 +73,7 @@ class FileUtils {
 
   static Future<int> _directorySize(Directory dir) async {
     var size = 0;
-    if (!await dir.exists()) return 0;
+    if (!dir.existsSync()) return 0;
     await for (final entity in dir.list(recursive: true, followLinks: false)) {
       if (entity is File) {
         size += await entity.length();
@@ -85,7 +85,7 @@ class FileUtils {
   /// Clears the application cache directory.
   static Future<void> clearCache() async {
     final cacheDir = await getApplicationCacheDirectory();
-    if (await cacheDir.exists()) {
+    if (cacheDir.existsSync()) {
       await for (final entity in cacheDir.list()) {
         await entity.delete(recursive: true);
       }

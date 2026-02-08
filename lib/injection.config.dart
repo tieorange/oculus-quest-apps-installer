@@ -19,7 +19,7 @@ import 'package:quest_game_manager/features/catalog/data/datasources/catalog_rem
 import 'package:quest_game_manager/features/catalog/data/repositories/catalog_repository_impl.dart'
     as _i312;
 import 'package:quest_game_manager/features/catalog/domain/repositories/catalog_repository.dart'
-    as _i362;
+    as _i361;
 import 'package:quest_game_manager/features/catalog/domain/usecases/get_game_catalog.dart'
     as _i751;
 import 'package:quest_game_manager/features/catalog/domain/usecases/search_games.dart'
@@ -38,24 +38,26 @@ import 'package:quest_game_manager/features/config/domain/usecases/fetch_config.
     as _i155;
 import 'package:quest_game_manager/features/downloads/data/datasources/download_remote_datasource.dart'
     as _i1009;
+import 'package:quest_game_manager/features/downloads/data/datasources/download_stats_datasource.dart'
+    as _i336;
 import 'package:quest_game_manager/features/downloads/data/repositories/download_repository_impl.dart'
     as _i244;
 import 'package:quest_game_manager/features/downloads/domain/repositories/download_repository.dart'
     as _i269;
 import 'package:quest_game_manager/features/downloads/presentation/bloc/downloads_bloc.dart'
     as _i505;
-import 'package:quest_game_manager/features/installer/data/datasources/installer_datasource.dart'
-    as _i800;
-import 'package:quest_game_manager/features/installer/data/repositories/installer_repository_impl.dart'
-    as _i801;
-import 'package:quest_game_manager/features/installer/domain/repositories/installer_repository.dart'
-    as _i802;
-import 'package:quest_game_manager/features/installer/presentation/bloc/installer_bloc.dart'
-    as _i803b;
 import 'package:quest_game_manager/features/favorites/data/datasources/favorites_local_datasource.dart'
-    as _i900;
+    as _i607;
 import 'package:quest_game_manager/features/favorites/presentation/cubit/favorites_cubit.dart'
-    as _i901;
+    as _i1002;
+import 'package:quest_game_manager/features/installer/data/datasources/installer_datasource.dart'
+    as _i798;
+import 'package:quest_game_manager/features/installer/data/repositories/installer_repository_impl.dart'
+    as _i593;
+import 'package:quest_game_manager/features/installer/domain/repositories/installer_repository.dart'
+    as _i539;
+import 'package:quest_game_manager/features/installer/presentation/bloc/installer_bloc.dart'
+    as _i472;
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart'
     as _i261;
 
@@ -77,10 +79,16 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i251.ConfigLocalDatasource());
     gh.lazySingleton<_i418.CatalogLocalDatasource>(
         () => _i418.CatalogLocalDatasource());
-    gh.lazySingleton<_i800.InstallerDatasource>(
-        () => _i800.InstallerDatasource());
-    gh.lazySingleton<_i900.FavoritesLocalDatasource>(
-        () => _i900.FavoritesLocalDatasource());
+    gh.lazySingleton<_i607.FavoritesLocalDatasource>(
+        () => _i607.FavoritesLocalDatasource());
+    gh.lazySingleton<_i798.InstallerDatasource>(
+        () => _i798.InstallerDatasource());
+    gh.lazySingleton<_i336.DownloadStatsDatasource>(
+        () => _i336.DownloadStatsDatasource());
+    gh.lazySingleton<_i539.InstallerRepository>(
+        () => _i593.InstallerRepositoryImpl(gh<_i798.InstallerDatasource>()));
+    gh.factory<_i1002.FavoritesCubit>(
+        () => _i1002.FavoritesCubit(gh<_i607.FavoritesLocalDatasource>()));
     gh.lazySingleton<_i803.ConfigRemoteDatasource>(
         () => _i803.ConfigRemoteDatasource(gh<_i361.Dio>()));
     gh.lazySingleton<_i24.CatalogRemoteDatasource>(
@@ -89,16 +97,18 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1009.DownloadRemoteDatasource(gh<_i361.Dio>()));
     gh.lazySingleton<_i269.DownloadRepository>(() =>
         _i244.DownloadRepositoryImpl(gh<_i1009.DownloadRemoteDatasource>()));
-    gh.lazySingleton<_i802.InstallerRepository>(
-        () => _i801.InstallerRepositoryImpl(gh<_i800.InstallerDatasource>()));
-    gh.factory<_i362.CatalogRepository>(() => _i312.CatalogRepositoryImpl(
+    gh.factory<_i472.InstallerBloc>(() => _i472.InstallerBloc(
+          gh<_i539.InstallerRepository>(),
+          gh<_i798.InstallerDatasource>(),
+        ));
+    gh.factory<_i361.CatalogRepository>(() => _i312.CatalogRepositoryImpl(
           gh<_i24.CatalogRemoteDatasource>(),
           gh<_i418.CatalogLocalDatasource>(),
         ));
     gh.factory<_i751.GetGameCatalog>(
-        () => _i751.GetGameCatalog(gh<_i362.CatalogRepository>()));
+        () => _i751.GetGameCatalog(gh<_i361.CatalogRepository>()));
     gh.factory<_i751.GetCachedCatalog>(
-        () => _i751.GetCachedCatalog(gh<_i362.CatalogRepository>()));
+        () => _i751.GetCachedCatalog(gh<_i361.CatalogRepository>()));
     gh.lazySingleton<_i118.ConfigRepository>(() => _i1022.ConfigRepositoryImpl(
           gh<_i803.ConfigRemoteDatasource>(),
           gh<_i251.ConfigLocalDatasource>(),
@@ -106,10 +116,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i505.DownloadsBloc>(() => _i505.DownloadsBloc(
           gh<_i269.DownloadRepository>(),
           gh<_i118.ConfigRepository>(),
-        ));
-    gh.factory<_i803b.InstallerBloc>(() => _i803b.InstallerBloc(
-          gh<_i802.InstallerRepository>(),
-          gh<_i800.InstallerDatasource>(),
         ));
     gh.factory<_i155.FetchConfig>(
         () => _i155.FetchConfig(gh<_i118.ConfigRepository>()));
@@ -120,8 +126,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i261.SettingsCubit>(
         () => _i261.SettingsCubit(gh<_i118.ConfigRepository>()));
-    gh.factory<_i901.FavoritesCubit>(
-        () => _i901.FavoritesCubit(gh<_i900.FavoritesLocalDatasource>()));
     return this;
   }
 }

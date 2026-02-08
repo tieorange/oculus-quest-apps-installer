@@ -90,7 +90,7 @@ class _MainNavigationState extends State<MainNavigation> {
                   t.status == DownloadStatus.downloading ||
                   t.status == DownloadStatus.extracting ||
                   t.status == DownloadStatus.installing ||
-                  t.status == DownloadStatus.queued).length
+                  t.status == DownloadStatus.queued,).length
               : 0;
 
           return BottomNavigationBar(

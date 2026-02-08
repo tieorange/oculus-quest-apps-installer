@@ -45,9 +45,7 @@ class DownloadRemoteDatasource {
     try {
       final cacheDir = await getApplicationCacheDirectory();
       final downloadDir = Directory('${cacheDir.path}/$gameId');
-      if (!await downloadDir.exists()) {
-        await downloadDir.create(recursive: true);
-      }
+      await downloadDir.create(recursive: true);
 
       final normalizedBaseUri = baseUri.endsWith('/') ? baseUri : '$baseUri/';
       final authToken = base64.encode(utf8.encode(':$password'));
@@ -72,7 +70,7 @@ class DownloadRemoteDatasource {
         // Check for existing partial download
         var offset = 0;
         final tmpFile = File(tmpPath);
-        if (await tmpFile.exists()) {
+        if (tmpFile.existsSync()) {
           offset = await tmpFile.length();
         }
 
@@ -111,7 +109,8 @@ class DownloadRemoteDatasource {
             currentPart: partNumber,
             totalParts: partNumber,
             speedBytesPerSecond: totalDownloaded /
-                (DateTime.now().difference(startTime).inMilliseconds / 1000).clamp(0.1, double.infinity),
+                (DateTime.now().difference(startTime).inMilliseconds / 1000)
+                    .clamp(0.1, double.infinity),
           );
 
           partNumber++;
@@ -233,7 +232,7 @@ class DownloadRemoteDatasource {
 
       // Also check for the conventional package-name subdirectory with data files
       final obbSourceDir = Directory('${downloadDir.path}/${game.packageName}');
-      if (await obbSourceDir.exists()) {
+      if (obbSourceDir.existsSync()) {
         await for (final entity in obbSourceDir.list(recursive: true)) {
           if (entity is File && !entity.path.endsWith('.obb') && !entity.path.endsWith('.apk')) {
             obbFiles.add(entity);
@@ -243,7 +242,7 @@ class DownloadRemoteDatasource {
 
       if (obbFiles.isNotEmpty) {
         final obbTargetDir = Directory('${AppConstants.obbBasePath}/${game.packageName}');
-        if (await obbTargetDir.exists()) {
+        if (obbTargetDir.existsSync()) {
           await obbTargetDir.delete(recursive: true);
         }
         await obbTargetDir.create(recursive: true);
@@ -271,7 +270,7 @@ class DownloadRemoteDatasource {
       yield task.copyWith(
         status: DownloadStatus.completed,
         pipelineStage: PipelineStage.done,
-        progress: 1.0,
+        progress: 1,
       );
     } catch (e, st) {
       AppLogger.error('Download pipeline failed', tag: 'DownloadDS', error: e, stackTrace: st);

@@ -71,7 +71,7 @@ class DownloadRepositoryImpl implements DownloadRepository {
             game: game,
             gameId: map['gameId'] as String? ?? '',
             status: restoredStatus,
-          ));
+          ),);
         } catch (e) {
           AppLogger.warning('Skipping corrupted queue entry: $key', tag: 'DownloadRepo');
         }
@@ -104,7 +104,7 @@ class DownloadRepositoryImpl implements DownloadRepository {
       return const Right(null);
     } catch (e, st) {
       AppLogger.error('Failed to save queue', tag: 'DownloadRepo', error: e, stackTrace: st);
-      return Left(StorageFailure(message: 'Failed to save download queue'));
+      return const Left(StorageFailure(message: 'Failed to save download queue'));
     }
   }
 

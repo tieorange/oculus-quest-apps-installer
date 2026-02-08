@@ -171,9 +171,9 @@ class _HeroThumbnail extends StatelessWidget {
   }
 
   Widget _placeholder() {
-    return Container(
-      color: const Color(0xFF2A2A40),
-      child: const Center(
+    return const ColoredBox(
+      color: Color(0xFF2A2A40),
+      child: Center(
         child: Icon(Icons.sports_esports, size: 80, color: Colors.white24),
       ),
     );
@@ -278,7 +278,7 @@ class _ActionButton extends StatelessWidget {
             state.queue.any((t) =>
                 t.game.packageName == game.packageName &&
                 t.status != DownloadStatus.completed &&
-                t.status != DownloadStatus.failed);
+                t.status != DownloadStatus.failed,);
 
         if (inQueue) {
           return ElevatedButton.icon(
@@ -364,10 +364,10 @@ class _DownloadProgress extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('${(task.progress * 100).toStringAsFixed(0)}%',
-                    style: Theme.of(context).textTheme.bodySmall),
+                    style: Theme.of(context).textTheme.bodySmall,),
                 if (task.pipelineStage == PipelineStage.downloading)
                   Text(FileUtils.formatSpeed(task.speedBytesPerSecond),
-                      style: Theme.of(context).textTheme.bodySmall),
+                      style: Theme.of(context).textTheme.bodySmall,),
               ],
             ),
           ],

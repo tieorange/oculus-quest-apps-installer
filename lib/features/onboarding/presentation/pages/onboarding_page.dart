@@ -9,6 +9,13 @@ class OnboardingPage extends StatefulWidget {
 
   final VoidCallback onComplete;
 
+  static const _prefsKey = 'onboarding_complete';
+
+  static Future<bool> isComplete() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_prefsKey) ?? false;
+  }
+
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
 }
@@ -18,16 +25,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
   bool _storageGranted = false;
   bool _installGranted = false;
 
-  static const _prefsKey = 'onboarding_complete';
-
-  static Future<bool> isComplete() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_prefsKey) ?? false;
-  }
-
   Future<void> _markComplete() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_prefsKey, true);
+    await prefs.setBool(OnboardingPage._prefsKey, true);
   }
 
   Future<void> _requestStoragePermission() async {
@@ -98,7 +98,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 index: 0,
                 icon: Icons.folder_open,
                 title: 'Storage Access',
-                description: 'Required to save downloaded games and manage OBB files on your device.',
+                description:
+                    'Required to save downloaded games and manage OBB files on your device.',
                 granted: _storageGranted,
                 onRequest: _requestStoragePermission,
               ),
@@ -116,7 +117,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 index: 2,
                 icon: Icons.check_circle,
                 title: 'All Set!',
-                description: 'You\'re ready to browse and install Quest games.',
+                description: "You're ready to browse and install Quest games.",
                 granted: _currentStep >= 2,
                 onRequest: null,
               ),

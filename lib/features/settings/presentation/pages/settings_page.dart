@@ -4,9 +4,9 @@ import 'package:quest_game_manager/core/constants/app_constants.dart';
 import 'package:quest_game_manager/core/utils/file_utils.dart';
 import 'package:quest_game_manager/features/downloads/data/datasources/download_stats_datasource.dart';
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart';
-import 'package:quest_game_manager/injection.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_section.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_tile.dart';
+import 'package:quest_game_manager/injection.dart';
 
 /// Settings page for app configuration.
 class SettingsPage extends StatelessWidget {
@@ -69,24 +69,24 @@ class SettingsPage extends StatelessWidget {
                 const SizedBox(height: 16),
                 const _DownloadStatsSection(),
                 const SizedBox(height: 16),
-                SettingsSection(
+                const SettingsSection(
                   title: 'About',
                   children: [
-                    const SettingsTile(
+                    SettingsTile(
                       leading: Icon(Icons.info_outline),
                       title: 'Version',
                       trailing: Text(AppConstants.appVersion),
                     ),
-                    const SettingsTile(
+                    SettingsTile(
                       leading: Icon(Icons.code),
                       title: 'Build',
                       trailing: Text(AppConstants.appBuild),
                     ),
                     SettingsTile(
-                      leading: const Icon(Icons.sports_esports),
+                      leading: Icon(Icons.sports_esports),
                       title: 'Quest Game Manager',
                       subtitle: 'Browse, download & install Quest games',
-                      trailing: const SizedBox.shrink(),
+                      trailing: SizedBox.shrink(),
                     ),
                   ],
                 ),

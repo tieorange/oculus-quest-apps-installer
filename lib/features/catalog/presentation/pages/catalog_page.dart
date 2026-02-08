@@ -161,7 +161,7 @@ class _CatalogPageState extends State<CatalogPage> {
                             const Icon(Icons.error_outline, size: 64, color: Colors.red),
                             const SizedBox(height: 16),
                             Text(failure.userMessage, textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyLarge),
+                                style: Theme.of(context).textTheme.bodyLarge,),
                             const SizedBox(height: 24),
                             ElevatedButton.icon(
                               onPressed: () =>

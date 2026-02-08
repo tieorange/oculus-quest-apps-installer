@@ -26,7 +26,7 @@ extension DownloadsStateX on DownloadsState {
   int get activeCount => queue.where((t) =>
       t.status == DownloadStatus.downloading ||
       t.status == DownloadStatus.extracting ||
-      t.status == DownloadStatus.installing).length;
+      t.status == DownloadStatus.installing,).length;
 
   int get completedCount =>
       queue.where((t) => t.status == DownloadStatus.completed).length;

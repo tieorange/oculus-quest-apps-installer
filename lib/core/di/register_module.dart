@@ -8,14 +8,12 @@ import 'package:quest_game_manager/core/constants/app_constants.dart';
 abstract class RegisterModule {
   @lazySingleton
   Dio get dio {
-    final dio = Dio(
+    return Dio(
       BaseOptions(
         connectTimeout: AppConstants.connectTimeout,
         receiveTimeout: AppConstants.receiveTimeout,
         headers: {'User-Agent': AppConstants.userAgent},
       ),
-    );
-    dio.httpClientAdapter = NativeAdapter();
-    return dio;
+    )..httpClientAdapter = NativeAdapter();
   }
 }

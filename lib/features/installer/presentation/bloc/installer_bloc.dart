@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:quest_game_manager/core/utils/app_logger.dart';
 import 'package:quest_game_manager/features/catalog/domain/entities/game.dart';
 import 'package:quest_game_manager/features/installer/data/datasources/installer_datasource.dart';
 import 'package:quest_game_manager/features/installer/domain/repositories/installer_repository.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'installer_bloc.freezed.dart';
 
@@ -47,8 +47,7 @@ enum InstallStage { findingApk, installingApk, copyingObb, cleaning, done }
 
 @injectable
 class InstallerBloc extends Bloc<InstallerEvent, InstallerState> {
-  InstallerBloc(this._repository, this._datasource)
-      : super(const InstallerState.idle()) {
+  InstallerBloc(this._repository, this._datasource) : super(const InstallerState.idle()) {
     on<InstallerInstall>(_onInstall);
     on<InstallerRefreshInstalled>(_onRefreshInstalled);
     on<InstallerUninstall>(_onUninstall);
@@ -73,18 +72,22 @@ class InstallerBloc extends Bloc<InstallerEvent, InstallerState> {
     final extractedDir = event.extractedDir;
 
     // Stage 1: Find APK
-    emit(InstallerState.installing(
-      gameName: game.name,
-      stage: InstallStage.findingApk,
-      installedPackages: _currentInstalled,
-    ));
+    emit(
+      InstallerState.installing(
+        gameName: game.name,
+        stage: InstallStage.findingApk,
+        installedPackages: _currentInstalled,
+      ),
+    );
 
     final dir = Directory(extractedDir);
-    if (!await dir.exists()) {
-      emit(InstallerState.failed(
-        message: 'Extracted directory not found',
-        installedPackages: _currentInstalled,
-      ));
+    if (!dir.existsSync()) {
+      emit(
+        InstallerState.failed(
+          message: 'Extracted directory not found',
+          installedPackages: _currentInstalled,
+        ),
+      );
       return;
     }
 
@@ -97,19 +100,23 @@ class InstallerBloc extends Bloc<InstallerEvent, InstallerState> {
     }
 
     if (apkFiles.isEmpty) {
-      emit(InstallerState.failed(
-        message: 'No APK file found in extracted data',
-        installedPackages: _currentInstalled,
-      ));
+      emit(
+        InstallerState.failed(
+          message: 'No APK file found in extracted data',
+          installedPackages: _currentInstalled,
+        ),
+      );
       return;
     }
 
     // Stage 2: Install APK
-    emit(InstallerState.installing(
-      gameName: game.name,
-      stage: InstallStage.installingApk,
-      installedPackages: _currentInstalled,
-    ));
+    emit(
+      InstallerState.installing(
+        gameName: game.name,
+        stage: InstallStage.installingApk,
+        installedPackages: _currentInstalled,
+      ),
+    );
 
     for (final apk in apkFiles) {
       AppLogger.info('Installing APK: ${apk.path}', tag: 'InstallerBloc');
@@ -122,38 +129,46 @@ class InstallerBloc extends Bloc<InstallerEvent, InstallerState> {
         (success) => !success,
       );
       if (failed) {
-        emit(InstallerState.failed(
-          message: 'Failed to install ${apk.uri.pathSegments.last}',
-          installedPackages: _currentInstalled,
-        ));
+        emit(
+          InstallerState.failed(
+            message: 'Failed to install ${apk.uri.pathSegments.last}',
+            installedPackages: _currentInstalled,
+          ),
+        );
         return;
       }
     }
 
     // Stage 3: Copy OBB files
-    emit(InstallerState.installing(
-      gameName: game.name,
-      stage: InstallStage.copyingObb,
-      installedPackages: _currentInstalled,
-    ));
+    emit(
+      InstallerState.installing(
+        gameName: game.name,
+        stage: InstallStage.copyingObb,
+        installedPackages: _currentInstalled,
+      ),
+    );
 
     await _repository.copyObbFiles(extractedDir, game.packageName);
 
     // Stage 4: Cleanup
-    emit(InstallerState.installing(
-      gameName: game.name,
-      stage: InstallStage.cleaning,
-      installedPackages: _currentInstalled,
-    ));
+    emit(
+      InstallerState.installing(
+        gameName: game.name,
+        stage: InstallStage.cleaning,
+        installedPackages: _currentInstalled,
+      ),
+    );
 
     await _repository.cleanup(extractedDir);
 
     // Done - refresh installed packages
     final updated = Set<String>.from(_currentInstalled)..add(game.packageName);
-    emit(InstallerState.success(
-      gameName: game.name,
-      installedPackages: updated,
-    ));
+    emit(
+      InstallerState.success(
+        gameName: game.name,
+        installedPackages: updated,
+      ),
+    );
   }
 
   Future<void> _onRefreshInstalled(
@@ -162,8 +177,10 @@ class InstallerBloc extends Bloc<InstallerEvent, InstallerState> {
   ) async {
     final result = await _repository.getInstalledPackages();
     result.fold(
-      (failure) => AppLogger.error('Failed to get installed: ${failure.userMessage}',
-          tag: 'InstallerBloc'),
+      (failure) => AppLogger.error(
+        'Failed to get installed: ${failure.userMessage}',
+        tag: 'InstallerBloc',
+      ),
       (packages) {
         final installed = packages.toSet();
         emit(InstallerState.idle(installedPackages: installed));

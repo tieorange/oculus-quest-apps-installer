@@ -71,7 +71,7 @@ class InstallerRepositoryImpl implements InstallerRepository {
       final can = await _datasource.canInstallPackages();
       return Right(can);
     } catch (e) {
-      return Left(PermissionFailure(permission: 'INSTALL_PACKAGES'));
+      return const Left(PermissionFailure(permission: 'INSTALL_PACKAGES'));
     }
   }
 

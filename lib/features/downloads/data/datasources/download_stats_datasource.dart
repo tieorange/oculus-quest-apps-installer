@@ -5,9 +5,9 @@ import 'package:quest_game_manager/core/constants/app_constants.dart';
 /// Tracks download statistics using Hive.
 @lazySingleton
 class DownloadStatsDatasource {
-  Box? _box;
+  Box<dynamic>? _box;
 
-  Future<Box> get _statsBox async {
+  Future<Box<dynamic>> get _statsBox async {
     _box ??= await Hive.openBox(AppConstants.downloadStatsBoxName);
     return _box!;
   }

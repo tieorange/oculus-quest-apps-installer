@@ -86,7 +86,7 @@ class _Thumbnail extends StatelessWidget {
             final path = snapshot.data;
             if (path != null) {
               return Image.file(File(path), fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholder());
+                  errorBuilder: (_, __, ___) => _placeholder(),);
             }
             return _placeholder();
           },
@@ -102,7 +102,7 @@ class _Thumbnail extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text('UPDATE',
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black)),
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black),),
             ),
           )
         else if (isInstalled)
@@ -116,7 +116,7 @@ class _Thumbnail extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text('INSTALLED',
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),),
             ),
           ),
       ],
@@ -151,19 +151,19 @@ class _GameInfo extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(game.name, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleSmall),
+              style: Theme.of(context).textTheme.titleSmall,),
           const SizedBox(height: 6),
           Row(
             children: [
               const Icon(Icons.storage, size: 12, color: Colors.grey),
               const SizedBox(width: 4),
               Text('${game.sizeMb} MB',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),),
               const SizedBox(width: 12),
               const Icon(Icons.update, size: 12, color: Colors.grey),
               const SizedBox(width: 4),
               Text(game.lastUpdated,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),),
             ],
           ),
         ],

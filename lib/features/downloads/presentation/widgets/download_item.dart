@@ -30,7 +30,7 @@ class DownloadItem extends StatelessWidget {
                     children: [
                       Text(task.game.name,
                           style: Theme.of(context).textTheme.titleMedium,
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                          maxLines: 1, overflow: TextOverflow.ellipsis,),
                       const SizedBox(height: 4),
                       _StatusLabel(task: task),
                     ],
