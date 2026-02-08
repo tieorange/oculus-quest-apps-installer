@@ -109,10 +109,36 @@ class InstallerDatasource {
   }
 
   /// Copies OBB files from source directory to the Android OBB directory.
+  /// Searches recursively for .obb files to handle varying archive structures.
   Future<void> copyObbFiles(String sourceDir, String packageName) async {
+    // First try the conventional path: sourceDir/packageName/
     final obbSourceDir = Directory('$sourceDir/$packageName');
-    if (!await obbSourceDir.exists()) {
-      AppLogger.debug('No OBB directory found for $packageName', tag: 'InstallerDS');
+
+    // Collect all OBB files - search recursively in the whole sourceDir
+    final obbFiles = <File>[];
+    final searchDir = Directory(sourceDir);
+    if (!await searchDir.exists()) {
+      AppLogger.debug('Source directory not found: $sourceDir', tag: 'InstallerDS');
+      return;
+    }
+
+    await for (final entity in searchDir.list(recursive: true)) {
+      if (entity is File && entity.path.endsWith('.obb')) {
+        obbFiles.add(entity);
+      }
+    }
+
+    // Also copy non-APK, non-OBB data files from the package subdirectory
+    if (await obbSourceDir.exists()) {
+      await for (final entity in obbSourceDir.list(recursive: true)) {
+        if (entity is File && !entity.path.endsWith('.obb') && !entity.path.endsWith('.apk')) {
+          obbFiles.add(entity);
+        }
+      }
+    }
+
+    if (obbFiles.isEmpty) {
+      AppLogger.debug('No OBB/data files found for $packageName', tag: 'InstallerDS');
       return;
     }
 
@@ -124,15 +150,13 @@ class InstallerDatasource {
     }
     await obbTargetDir.create(recursive: true);
 
-    // Copy all files
-    await for (final entity in obbSourceDir.list()) {
-      if (entity is File) {
-        final fileName = entity.uri.pathSegments.last;
-        final targetPath = '${obbTargetDir.path}/$fileName';
-        AppLogger.info('Copying OBB: $fileName', tag: 'InstallerDS');
-        await entity.copy(targetPath);
-      }
+    // Copy all OBB/data files
+    for (final file in obbFiles) {
+      final fileName = file.uri.pathSegments.last;
+      final targetPath = '${obbTargetDir.path}/$fileName';
+      AppLogger.info('Copying OBB/data: $fileName', tag: 'InstallerDS');
+      await file.copy(targetPath);
     }
-    AppLogger.info('OBB files copied for $packageName', tag: 'InstallerDS');
+    AppLogger.info('OBB files copied for $packageName (${obbFiles.length} files)', tag: 'InstallerDS');
   }
 }

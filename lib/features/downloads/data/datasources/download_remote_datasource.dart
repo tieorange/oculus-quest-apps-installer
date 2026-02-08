@@ -223,20 +223,35 @@ class DownloadRemoteDatasource {
       );
 
       // --- OBB COPY PHASE ---
+      // Search for OBB files recursively (archives may extract to varying structures)
+      final obbFiles = <File>[];
+      await for (final entity in downloadDir.list(recursive: true)) {
+        if (entity is File && entity.path.endsWith('.obb')) {
+          obbFiles.add(entity);
+        }
+      }
+
+      // Also check for the conventional package-name subdirectory with data files
       final obbSourceDir = Directory('${downloadDir.path}/${game.packageName}');
       if (await obbSourceDir.exists()) {
+        await for (final entity in obbSourceDir.list(recursive: true)) {
+          if (entity is File && !entity.path.endsWith('.obb') && !entity.path.endsWith('.apk')) {
+            obbFiles.add(entity);
+          }
+        }
+      }
+
+      if (obbFiles.isNotEmpty) {
         final obbTargetDir = Directory('${AppConstants.obbBasePath}/${game.packageName}');
         if (await obbTargetDir.exists()) {
           await obbTargetDir.delete(recursive: true);
         }
         await obbTargetDir.create(recursive: true);
 
-        await for (final entity in obbSourceDir.list()) {
-          if (entity is File) {
-            final fileName = entity.uri.pathSegments.last;
-            await entity.copy('${obbTargetDir.path}/$fileName');
-            AppLogger.info('Copied OBB: $fileName', tag: 'DownloadDS');
-          }
+        for (final obbFile in obbFiles) {
+          final fileName = obbFile.uri.pathSegments.last;
+          await obbFile.copy('${obbTargetDir.path}/$fileName');
+          AppLogger.info('Copied OBB/data: $fileName', tag: 'DownloadDS');
         }
       }
 
