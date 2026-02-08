@@ -12,14 +12,14 @@ class SortFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<CatalogBloc, CatalogState>(
       builder: (context, state) {
-        final sortType = state.maybeWhen(
-          loaded: (_, __, ___, sortType, ____, _____, ______) => sortType,
-          orElse: () => SortType.lastUpdated,
-        );
-        final filter = state.maybeWhen(
-          loaded: (_, __, ___, ____, filter, _____, ______) => filter,
-          orElse: () => GameStatusFilter.all,
-        );
+        final sortType = switch (state) {
+          CatalogLoaded(:final sortType) => sortType,
+          _ => SortType.lastUpdated,
+        };
+        final filter = switch (state) {
+          CatalogLoaded(:final filter) => filter,
+          _ => GameStatusFilter.all,
+        };
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

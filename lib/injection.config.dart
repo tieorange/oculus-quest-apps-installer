@@ -19,7 +19,7 @@ import 'package:quest_game_manager/features/catalog/data/datasources/catalog_rem
 import 'package:quest_game_manager/features/catalog/data/repositories/catalog_repository_impl.dart'
     as _i312;
 import 'package:quest_game_manager/features/catalog/domain/repositories/catalog_repository.dart'
-    as _i361;
+    as _i362;
 import 'package:quest_game_manager/features/catalog/domain/usecases/get_game_catalog.dart'
     as _i751;
 import 'package:quest_game_manager/features/catalog/domain/usecases/search_games.dart'
@@ -91,14 +91,14 @@ extension GetItInjectableX on _i174.GetIt {
         _i244.DownloadRepositoryImpl(gh<_i1009.DownloadRemoteDatasource>()));
     gh.lazySingleton<_i802.InstallerRepository>(
         () => _i801.InstallerRepositoryImpl(gh<_i800.InstallerDatasource>()));
-    gh.factory<_i361.CatalogRepository>(() => _i312.CatalogRepositoryImpl(
+    gh.factory<_i362.CatalogRepository>(() => _i312.CatalogRepositoryImpl(
           gh<_i24.CatalogRemoteDatasource>(),
           gh<_i418.CatalogLocalDatasource>(),
         ));
     gh.factory<_i751.GetGameCatalog>(
-        () => _i751.GetGameCatalog(gh<_i361.CatalogRepository>()));
+        () => _i751.GetGameCatalog(gh<_i362.CatalogRepository>()));
     gh.factory<_i751.GetCachedCatalog>(
-        () => _i751.GetCachedCatalog(gh<_i361.CatalogRepository>()));
+        () => _i751.GetCachedCatalog(gh<_i362.CatalogRepository>()));
     gh.lazySingleton<_i118.ConfigRepository>(() => _i1022.ConfigRepositoryImpl(
           gh<_i803.ConfigRemoteDatasource>(),
           gh<_i251.ConfigLocalDatasource>(),

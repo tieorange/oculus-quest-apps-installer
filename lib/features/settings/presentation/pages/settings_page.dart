@@ -4,6 +4,7 @@ import 'package:quest_game_manager/core/constants/app_constants.dart';
 import 'package:quest_game_manager/core/utils/file_utils.dart';
 import 'package:quest_game_manager/features/downloads/data/datasources/download_stats_datasource.dart';
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart';
+import 'package:quest_game_manager/injection.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_section.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_tile.dart';
 
@@ -245,7 +246,7 @@ class _DownloadStatsSectionState extends State<_DownloadStatsSection> {
   }
 
   Future<void> _loadStats() async {
-    final datasource = DownloadStatsDatasource();
+    final datasource = getIt<DownloadStatsDatasource>();
     final stats = await datasource.getStats();
     if (mounted) setState(() => _stats = stats);
   }

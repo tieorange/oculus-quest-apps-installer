@@ -320,8 +320,9 @@ class _ActionButton extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: () {
               context.read<DownloadsBloc>().add(DownloadsEvent.download(game));
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
+              messenger.showSnackBar(
                 SnackBar(content: Text('${game.name} added to download queue')),
               );
             },

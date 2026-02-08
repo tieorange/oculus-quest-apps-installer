@@ -8,7 +8,7 @@ class DownloadStatsDatasource {
   Box? _box;
 
   Future<Box> get _statsBox async {
-    _box ??= await Hive.openBox('download_stats');
+    _box ??= await Hive.openBox(AppConstants.downloadStatsBoxName);
     return _box!;
   }
 

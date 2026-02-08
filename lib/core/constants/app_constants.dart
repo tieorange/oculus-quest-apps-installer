@@ -36,4 +36,5 @@ class AppConstants {
   static const String downloadQueueBoxName = 'download_queue';
   static const String favoritesBoxName = 'favorites';
   static const String settingsBoxName = 'settings';
+  static const String downloadStatsBoxName = 'download_stats';
 }
