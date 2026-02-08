@@ -153,9 +153,6 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     // Start download stream
     AppLogger.info('Starting download for: ${task.game.name}', tag: 'DownloadsBloc');
 
-    // Start download stream
-    AppLogger.info('Starting download for: ${task.game.name}', tag: 'DownloadsBloc');
-
     await emit.forEach<DownloadTask>(
       _downloadRepository.downloadGame(task.game, config.baseUri, config.password),
       onData: (updatedTask) {

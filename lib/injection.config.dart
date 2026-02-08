@@ -12,7 +12,6 @@ import 'package:dio/dio.dart' as _i361;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:quest_game_manager/core/di/register_module.dart' as _i1054;
-import 'package:quest_game_manager/core/services/rclone_service.dart' as _i574;
 import 'package:quest_game_manager/features/catalog/data/datasources/catalog_local_datasource.dart'
     as _i418;
 import 'package:quest_game_manager/features/catalog/data/datasources/catalog_remote_datasource.dart'
@@ -45,6 +44,18 @@ import 'package:quest_game_manager/features/downloads/domain/repositories/downlo
     as _i269;
 import 'package:quest_game_manager/features/downloads/presentation/bloc/downloads_bloc.dart'
     as _i505;
+import 'package:quest_game_manager/features/installer/data/datasources/installer_datasource.dart'
+    as _i800;
+import 'package:quest_game_manager/features/installer/data/repositories/installer_repository_impl.dart'
+    as _i801;
+import 'package:quest_game_manager/features/installer/domain/repositories/installer_repository.dart'
+    as _i802;
+import 'package:quest_game_manager/features/installer/presentation/bloc/installer_bloc.dart'
+    as _i803b;
+import 'package:quest_game_manager/features/favorites/data/datasources/favorites_local_datasource.dart'
+    as _i900;
+import 'package:quest_game_manager/features/favorites/presentation/cubit/favorites_cubit.dart'
+    as _i901;
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart'
     as _i261;
 
@@ -62,11 +73,14 @@ extension GetItInjectableX on _i174.GetIt {
     final registerModule = _$RegisterModule();
     gh.factory<_i259.SearchGames>(() => _i259.SearchGames());
     gh.lazySingleton<_i361.Dio>(() => registerModule.dio);
-    gh.lazySingleton<_i574.RcloneService>(() => _i574.RcloneService());
     gh.lazySingleton<_i251.ConfigLocalDatasource>(
         () => _i251.ConfigLocalDatasource());
     gh.lazySingleton<_i418.CatalogLocalDatasource>(
         () => _i418.CatalogLocalDatasource());
+    gh.lazySingleton<_i800.InstallerDatasource>(
+        () => _i800.InstallerDatasource());
+    gh.lazySingleton<_i900.FavoritesLocalDatasource>(
+        () => _i900.FavoritesLocalDatasource());
     gh.lazySingleton<_i803.ConfigRemoteDatasource>(
         () => _i803.ConfigRemoteDatasource(gh<_i361.Dio>()));
     gh.lazySingleton<_i24.CatalogRemoteDatasource>(
@@ -75,6 +89,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1009.DownloadRemoteDatasource(gh<_i361.Dio>()));
     gh.lazySingleton<_i269.DownloadRepository>(() =>
         _i244.DownloadRepositoryImpl(gh<_i1009.DownloadRemoteDatasource>()));
+    gh.lazySingleton<_i802.InstallerRepository>(
+        () => _i801.InstallerRepositoryImpl(gh<_i800.InstallerDatasource>()));
     gh.factory<_i361.CatalogRepository>(() => _i312.CatalogRepositoryImpl(
           gh<_i24.CatalogRemoteDatasource>(),
           gh<_i418.CatalogLocalDatasource>(),
@@ -91,6 +107,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i269.DownloadRepository>(),
           gh<_i118.ConfigRepository>(),
         ));
+    gh.factory<_i803b.InstallerBloc>(() => _i803b.InstallerBloc(
+          gh<_i802.InstallerRepository>(),
+          gh<_i800.InstallerDatasource>(),
+        ));
     gh.factory<_i155.FetchConfig>(
         () => _i155.FetchConfig(gh<_i118.ConfigRepository>()));
     gh.factory<_i120.CatalogBloc>(() => _i120.CatalogBloc(
@@ -100,6 +120,8 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i261.SettingsCubit>(
         () => _i261.SettingsCubit(gh<_i118.ConfigRepository>()));
+    gh.factory<_i901.FavoritesCubit>(
+        () => _i901.FavoritesCubit(gh<_i900.FavoritesLocalDatasource>()));
     return this;
   }
 }

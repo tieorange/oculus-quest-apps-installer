@@ -17,31 +17,32 @@ sealed class Failure with _$Failure {
   const factory Failure.cancelled() = CancelledFailure;
   const factory Failure.unknown({required String message}) = UnknownFailure;
 
+  /// User-friendly error message for display.
   String get userMessage => switch (this) {
-        NetworkFailure(:final message) => 'Network error: $message',
-        ServerFailure(:final statusCode, :final message) => 'Server error ($statusCode): $message',
+        NetworkFailure(:final message) =>
+          message.contains('SocketException') || message.contains('connection')
+              ? 'No internet connection — check your WiFi'
+              : 'Network error: $message',
+        ServerFailure(:final statusCode, :final message) => switch (statusCode) {
+            403 => 'Access denied — the server blocked this request',
+            404 => 'Content not found on the server',
+            429 => 'Server is busy — try again in a few minutes',
+            >= 500 => 'Server is having issues — try again later',
+            _ => 'Server error ($statusCode): $message',
+          },
         StorageFailure(:final message) => 'Storage error: $message',
         ExtractionFailure(:final message) => 'Extraction failed: $message',
         InstallationFailure(:final message) => 'Installation failed: $message',
-        PermissionFailure(:final permission) => 'Permission required: $permission',
+        PermissionFailure(:final permission) =>
+          'Permission required: $permission\nPlease grant it in Settings',
         InsufficientSpaceFailure(:final requiredMb, :final availableMb) =>
-          'Need ${requiredMb}MB but only ${availableMb}MB available',
+          'Not enough storage — need ${_formatMb(requiredMb)}, only ${_formatMb(availableMb)} free',
         CancelledFailure() => 'Operation cancelled',
-        UnknownFailure(:final message) => 'Error: $message',
+        UnknownFailure(:final message) => 'Something went wrong: $message',
       };
-}
 
-extension FailureX on Failure {
-  String get userMessage => switch (this) {
-        NetworkFailure(:final message) => 'Network error: $message',
-        ServerFailure(:final statusCode, :final message) => 'Server error ($statusCode): $message',
-        StorageFailure(:final message) => 'Storage error: $message',
-        ExtractionFailure(:final message) => 'Extraction failed: $message',
-        InstallationFailure(:final message) => 'Installation failed: $message',
-        PermissionFailure(:final permission) => 'Permission required: $permission',
-        InsufficientSpaceFailure(:final requiredMb, :final availableMb) =>
-          'Need ${requiredMb}MB but only ${availableMb}MB available',
-        CancelledFailure() => 'Operation cancelled',
-        UnknownFailure(:final message) => 'Error: $message',
-      };
+  static String _formatMb(int mb) {
+    if (mb >= 1024) return '${(mb / 1024).toStringAsFixed(1)} GB';
+    return '$mb MB';
+  }
 }

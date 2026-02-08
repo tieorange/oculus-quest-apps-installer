@@ -15,3 +15,22 @@ sealed class DownloadsState with _$DownloadsState {
   }) = DownloadsLoaded;
   const factory DownloadsState.error(Failure failure) = DownloadsError;
 }
+
+/// Helper extension to get queue from any state.
+extension DownloadsStateX on DownloadsState {
+  List<DownloadTask> get queue => switch (this) {
+        DownloadsLoaded(:final queue) => queue,
+        _ => const [],
+      };
+
+  int get activeCount => queue.where((t) =>
+      t.status == DownloadStatus.downloading ||
+      t.status == DownloadStatus.extracting ||
+      t.status == DownloadStatus.installing).length;
+
+  int get completedCount =>
+      queue.where((t) => t.status == DownloadStatus.completed).length;
+
+  int get queuedCount =>
+      queue.where((t) => t.status == DownloadStatus.queued).length;
+}

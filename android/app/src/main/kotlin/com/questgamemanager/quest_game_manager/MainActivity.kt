@@ -4,17 +4,16 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
-import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry
 import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
     private val ARCHIVE_CHANNEL = "com.questgamemanager.quest_game_manager/archive"
-    private val RCLONE_CHANNEL = "com.questgamemanager.quest_game_manager/rclone"
+    private lateinit var installerChannel: PackageInstallerChannel
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        
+
         // Archive extraction channel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ARCHIVE_CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "extract7z") {
@@ -38,20 +37,19 @@ class MainActivity : FlutterActivity() {
                 result.notImplemented()
             }
         }
-        
-        // Rclone channel - provides path to native library directory
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, RCLONE_CHANNEL).setMethodCallHandler { call, result ->
-            if (call.method == "getNativeLibraryDir") {
-                try {
-                    val nativeLibDir = applicationInfo.nativeLibraryDir
-                    result.success(nativeLibDir)
-                } catch (e: Exception) {
-                    result.error("RcloneError", e.message, null)
-                }
-            } else {
-                result.notImplemented()
-            }
-        }
+
+        // Package installer channel (APK install, package queries, launch)
+        installerChannel = PackageInstallerChannel(this)
+        installerChannel.register()
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            PackageInstallerChannel.CHANNEL_NAME
+        ).setMethodCallHandler(installerChannel)
+    }
+
+    override fun onDestroy() {
+        installerChannel.unregister()
+        super.onDestroy()
     }
 
     private fun extract7z(filePath: String, outDir: String, password: String?) {
@@ -60,7 +58,6 @@ class MainActivity : FlutterActivity() {
             throw Exception("File not found: $filePath")
         }
 
-        // Use appropriate constructor
         val sevenZFile = if (password != null) {
             SevenZFile(file, password.toCharArray())
         } else {

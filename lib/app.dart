@@ -4,9 +4,13 @@ import 'package:quest_game_manager/core/theme/app_theme.dart';
 import 'package:quest_game_manager/features/catalog/presentation/bloc/catalog_bloc.dart';
 import 'package:quest_game_manager/features/catalog/presentation/bloc/catalog_event.dart';
 import 'package:quest_game_manager/features/catalog/presentation/pages/catalog_page.dart';
+import 'package:quest_game_manager/features/downloads/domain/entities/download_task.dart';
 import 'package:quest_game_manager/features/downloads/presentation/bloc/downloads_bloc.dart';
 import 'package:quest_game_manager/features/downloads/presentation/bloc/downloads_event.dart';
+import 'package:quest_game_manager/features/downloads/presentation/bloc/downloads_state.dart';
 import 'package:quest_game_manager/features/downloads/presentation/pages/downloads_page.dart';
+import 'package:quest_game_manager/features/favorites/presentation/cubit/favorites_cubit.dart';
+import 'package:quest_game_manager/features/installer/presentation/bloc/installer_bloc.dart';
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:quest_game_manager/features/settings/presentation/pages/settings_page.dart';
 import 'package:quest_game_manager/injection.dart';
@@ -21,6 +25,8 @@ class QuestGameManagerApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => getIt<CatalogBloc>()..add(const CatalogEvent.load())),
         BlocProvider(create: (_) => getIt<DownloadsBloc>()..add(const DownloadsEvent.loadQueue())),
+        BlocProvider(create: (_) => getIt<InstallerBloc>()..add(const InstallerEvent.refreshInstalled())),
+        BlocProvider(create: (_) => getIt<FavoritesCubit>()..loadFavorites()),
         BlocProvider(create: (_) => getIt<SettingsCubit>()),
       ],
       child: MaterialApp(
@@ -50,26 +56,46 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.games_outlined),
-            activeIcon: Icon(Icons.games),
-            label: 'Browse',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.download_outlined),
-            activeIcon: Icon(Icons.download),
-            label: 'Downloads',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
+      bottomNavigationBar: BlocBuilder<DownloadsBloc, DownloadsState>(
+        builder: (context, state) {
+          final activeCount = state is DownloadsLoaded
+              ? state.queue.where((t) =>
+                  t.status == DownloadStatus.downloading ||
+                  t.status == DownloadStatus.extracting ||
+                  t.status == DownloadStatus.installing ||
+                  t.status == DownloadStatus.queued).length
+              : 0;
+
+          return BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) => setState(() => _currentIndex = index),
+            items: [
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.games_outlined),
+                activeIcon: Icon(Icons.games),
+                label: 'Browse',
+              ),
+              BottomNavigationBarItem(
+                icon: Badge(
+                  isLabelVisible: activeCount > 0,
+                  label: Text('$activeCount'),
+                  child: const Icon(Icons.download_outlined),
+                ),
+                activeIcon: Badge(
+                  isLabelVisible: activeCount > 0,
+                  label: Text('$activeCount'),
+                  child: const Icon(Icons.download),
+                ),
+                label: 'Downloads',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.settings_outlined),
+                activeIcon: Icon(Icons.settings),
+                label: 'Settings',
+              ),
+            ],
+          );
+        },
       ),
     );
   }

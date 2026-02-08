@@ -1,15 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:quest_game_manager/core/utils/file_utils.dart';
 
-/// Widget displaying available storage space.
-class StorageIndicator extends StatelessWidget {
+/// Widget displaying available storage space with live data.
+class StorageIndicator extends StatefulWidget {
   const StorageIndicator({super.key});
 
   @override
+  State<StorageIndicator> createState() => _StorageIndicatorState();
+}
+
+class _StorageIndicatorState extends State<StorageIndicator> {
+  int _freeSpaceMb = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSpace();
+  }
+
+  Future<void> _loadSpace() async {
+    final free = await FileUtils.getFreeSpaceMb('/data');
+    if (mounted) {
+      setState(() => _freeSpaceMb = free);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // TODO(user): Implement actual storage checking
-    const freeGb = 24.5;
-    const totalGb = 128.0;
-    const usedPercent = (totalGb - freeGb) / totalGb;
+    if (_freeSpaceMb < 0) {
+      return const SizedBox.shrink();
+    }
+
+    final freeGb = _freeSpaceMb / 1024;
+    final color = freeGb < 2
+        ? Colors.red
+        : freeGb < 10
+            ? Colors.orange
+            : Theme.of(context).colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -20,20 +47,11 @@ class StorageIndicator extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 80,
-            child: LinearProgressIndicator(
-              value: usedPercent,
-              backgroundColor: Colors.white24,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                usedPercent > 0.9 ? Colors.red : Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
+          Icon(Icons.storage, size: 16, color: color),
+          const SizedBox(width: 6),
           Text(
             '${freeGb.toStringAsFixed(1)} GB free',
-            style: Theme.of(context).textTheme.labelMedium,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
           ),
         ],
       ),

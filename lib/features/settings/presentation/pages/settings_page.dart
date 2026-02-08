@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quest_game_manager/core/constants/app_constants.dart';
+import 'package:quest_game_manager/core/utils/file_utils.dart';
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_section.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_tile.dart';
@@ -29,11 +31,11 @@ class SettingsPage extends StatelessWidget {
                           context.read<SettingsCubit>().setAutoRetry(enabled: value),
                     ),
                     SettingsTile.switchTile(
-                      leading: const Icon(Icons.notifications),
-                      title: 'Download notifications',
-                      value: state.notificationsEnabled,
+                      leading: const Icon(Icons.download_done),
+                      title: 'Auto-install after download',
+                      value: state.autoInstallEnabled,
                       onChanged: (value) =>
-                          context.read<SettingsCubit>().setNotificationsEnabled(enabled: value),
+                          context.read<SettingsCubit>().setAutoInstall(enabled: value),
                     ),
                   ],
                 ),
@@ -43,8 +45,8 @@ class SettingsPage extends StatelessWidget {
                   children: [
                     SettingsTile.action(
                       leading: const Icon(Icons.settings_ethernet),
-                      title: 'Manual Config Check',
-                      subtitle: 'Override server configuration manually',
+                      title: 'Manual Config Override',
+                      subtitle: 'Paste vrp-public.json content',
                       onTap: () => _showManualConfigDialog(context),
                     ),
                   ],
@@ -53,27 +55,34 @@ class SettingsPage extends StatelessWidget {
                 SettingsSection(
                   title: 'Storage',
                   children: [
+                    _CacheSizeTile(),
                     SettingsTile.action(
-                      leading: const Icon(Icons.delete_outline),
-                      title: 'Clear cache',
-                      subtitle: 'Remove downloaded game catalogs',
+                      leading: const Icon(Icons.delete_sweep),
+                      title: 'Clear all cache',
+                      subtitle: 'Remove downloaded archives and temp files',
                       onTap: () => _showClearCacheDialog(context),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                const SettingsSection(
+                SettingsSection(
                   title: 'About',
                   children: [
-                    SettingsTile(
+                    const SettingsTile(
                       leading: Icon(Icons.info_outline),
                       title: 'Version',
-                      trailing: Text('1.0.0'),
+                      trailing: Text(AppConstants.appVersion),
                     ),
-                    SettingsTile(
+                    const SettingsTile(
                       leading: Icon(Icons.code),
                       title: 'Build',
-                      trailing: Text('1'),
+                      trailing: Text(AppConstants.appBuild),
+                    ),
+                    SettingsTile(
+                      leading: const Icon(Icons.sports_esports),
+                      title: 'Quest Game Manager',
+                      subtitle: 'Browse, download & install Quest games',
+                      trailing: const SizedBox.shrink(),
                     ),
                   ],
                 ),
@@ -91,18 +100,20 @@ class SettingsPage extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Clear Cache?'),
         content: const Text(
-          'This will remove the downloaded game catalog. '
-          'It will be re-downloaded next time you open the app.',
+          'This will remove all downloaded archives and temporary files. '
+          'The game catalog will be re-downloaded on next refresh.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
           ElevatedButton(
-            onPressed: () {
-              context.read<SettingsCubit>().clearCache();
+            onPressed: () async {
               Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Cache cleared')));
+              await context.read<SettingsCubit>().clearCache();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Cache cleared successfully')),
+                );
+              }
             },
             child: const Text('Clear'),
           ),
@@ -123,7 +134,7 @@ class SettingsPage extends StatelessWidget {
             if (state.configSaveStatus == ConfigSaveStatus.success) {
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Config saved successfully. Please restart app.')),
+                const SnackBar(content: Text('Config saved. Restart app to apply.')),
               );
               context.read<SettingsCubit>().resetConfigSaveStatus();
             } else if (state.configSaveStatus == ConfigSaveStatus.failure) {
@@ -143,10 +154,10 @@ class SettingsPage extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Paste the content of vrp-public.json here to override the blocked server.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    'Paste vrp-public.json content to override the server configuration.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   TextField(
                     controller: controller,
                     maxLines: 5,
@@ -179,6 +190,37 @@ class SettingsPage extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _CacheSizeTile extends StatefulWidget {
+  @override
+  State<_CacheSizeTile> createState() => _CacheSizeTileState();
+}
+
+class _CacheSizeTileState extends State<_CacheSizeTile> {
+  String _cacheSize = 'Calculating...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCacheSize();
+  }
+
+  Future<void> _loadCacheSize() async {
+    final size = await FileUtils.getCacheSize();
+    if (mounted) {
+      setState(() => _cacheSize = FileUtils.formatBytes(size));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsTile(
+      leading: const Icon(Icons.folder),
+      title: 'Cache size',
+      trailing: Text(_cacheSize, style: Theme.of(context).textTheme.bodySmall),
     );
   }
 }

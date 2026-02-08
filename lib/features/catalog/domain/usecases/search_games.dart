@@ -11,7 +11,8 @@ class SearchGames {
         .where(
           (game) =>
               game.name.toLowerCase().contains(lowerQuery) ||
-              game.packageName.toLowerCase().contains(lowerQuery),
+              game.packageName.toLowerCase().contains(lowerQuery) ||
+              game.releaseName.toLowerCase().contains(lowerQuery),
         )
         .toList();
   }

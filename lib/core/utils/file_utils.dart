@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
+
 /// Utility functions for file system operations.
 class FileUtils {
   FileUtils._();
@@ -38,6 +40,11 @@ class FileUtils {
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
   }
 
+  static String formatMb(int mb) {
+    if (mb >= 1024) return '${(mb / 1024).toStringAsFixed(1)} GB';
+    return '$mb MB';
+  }
+
   static String formatSpeed(double bytesPerSecond) {
     if (bytesPerSecond < 1024) return '${bytesPerSecond.toStringAsFixed(0)} B/s';
     if (bytesPerSecond < 1024 * 1024) {
@@ -52,5 +59,36 @@ class FileUtils {
     if (seconds < 60) return '${seconds}s';
     if (seconds < 3600) return '${seconds ~/ 60}m ${seconds % 60}s';
     return '${seconds ~/ 3600}h ${(seconds % 3600) ~/ 60}m';
+  }
+
+  /// Returns the total cache size in bytes.
+  static Future<int> getCacheSize() async {
+    try {
+      final cacheDir = await getApplicationCacheDirectory();
+      return _directorySize(cacheDir);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  static Future<int> _directorySize(Directory dir) async {
+    var size = 0;
+    if (!await dir.exists()) return 0;
+    await for (final entity in dir.list(recursive: true, followLinks: false)) {
+      if (entity is File) {
+        size += await entity.length();
+      }
+    }
+    return size;
+  }
+
+  /// Clears the application cache directory.
+  static Future<void> clearCache() async {
+    final cacheDir = await getApplicationCacheDirectory();
+    if (await cacheDir.exists()) {
+      await for (final entity in cacheDir.list()) {
+        await entity.delete(recursive: true);
+      }
+    }
   }
 }

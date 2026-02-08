@@ -29,29 +29,63 @@ class CatalogPage extends StatelessWidget {
                 builder: (context, state) {
                   return switch (state) {
                     CatalogInitial() ||
-                    CatalogLoading() => const Center(child: CircularProgressIndicator()),
-                    CatalogLoaded(:final filteredGames) => RefreshIndicator(
+                    CatalogLoading() =>
+                      const Center(child: CircularProgressIndicator()),
+                    CatalogLoaded(:final filteredGames, :final searchQuery) => RefreshIndicator(
                       onRefresh: () async {
                         context.read<CatalogBloc>().add(const CatalogEvent.refresh());
                       },
                       child: filteredGames.isEmpty
-                          ? const Center(child: Text('No games found'))
-                          : GameGrid(games: filteredGames),
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    searchQuery.isNotEmpty
+                                        ? 'No games match "$searchQuery"'
+                                        : 'No games found',
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Showing ${filteredGames.length} games',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(child: GameGrid(games: filteredGames)),
+                              ],
+                            ),
                     ),
                     CatalogError(:final failure) => Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.error_outline, size: 64),
-                          const SizedBox(height: 16),
-                          Text(failure.userMessage, textAlign: TextAlign.center),
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: () =>
-                                context.read<CatalogBloc>().add(const CatalogEvent.load()),
-                            child: const Text('Retry'),
-                          ),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                            const SizedBox(height: 16),
+                            Text(failure.userMessage, textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyLarge),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  context.read<CatalogBloc>().add(const CatalogEvent.load()),
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Retry'),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   };
