@@ -249,7 +249,7 @@ class DownloadRemoteDatasource {
       const progressChannel =
           EventChannel('com.questgamemanager.quest_game_manager/archive_progress');
 
-      StreamSubscription? progressSubscription;
+      StreamSubscription<dynamic>? progressSubscription;
 
       try {
         // Listen to progress events (0.0 to 1.0)
@@ -436,6 +436,68 @@ class DownloadRemoteDatasource {
     } catch (e) {
       AppLogger.error('Failed to clear downloads', tag: 'DownloadDS', error: e);
       throw const DownloadException(message: 'Failed to clear downloads');
+    }
+  }
+
+  /// Returns folders in the download cache directory with their sizes.
+  Future<List<({String name, String path, int sizeBytes})>> getDownloadFolders() async {
+    final result = <({String name, String path, int sizeBytes})>[];
+    try {
+      final baseDir = await _getDownloadBaseDir();
+      if (!baseDir.existsSync()) return result;
+
+      await for (final entity in baseDir.list()) {
+        if (entity is Directory) {
+          final size = await FileUtils.getDirectorySize(entity);
+          result.add((
+            name: entity.uri.pathSegments.where((s) => s.isNotEmpty).last,
+            path: entity.path,
+            sizeBytes: size,
+          ));
+        }
+      }
+    } catch (e) {
+      AppLogger.error('Failed to get download folders', tag: 'DownloadDS', error: e);
+    }
+    return result;
+  }
+
+  /// Returns folders in the OBB directory with their sizes.
+  Future<List<({String name, String path, int sizeBytes})>> getObbFolders() async {
+    final result = <({String name, String path, int sizeBytes})>[];
+    try {
+      final obbDir = Directory(AppConstants.obbBasePath);
+      if (!obbDir.existsSync()) return result;
+
+      await for (final entity in obbDir.list()) {
+        if (entity is Directory) {
+          final size = await FileUtils.getDirectorySize(entity);
+          result.add((
+            name: entity.uri.pathSegments.where((s) => s.isNotEmpty).last,
+            path: entity.path,
+            sizeBytes: size,
+          ));
+        }
+      }
+    } catch (e) {
+      AppLogger.error('Failed to get OBB folders', tag: 'DownloadDS', error: e);
+    }
+    return result;
+  }
+
+  /// Deletes a path (file or directory).
+  Future<void> deletePath(String path) async {
+    try {
+      final entity = FileSystemEntity.typeSync(path);
+      if (entity == FileSystemEntityType.directory) {
+        await Directory(path).delete(recursive: true);
+      } else if (entity == FileSystemEntityType.file) {
+        await File(path).delete();
+      }
+      AppLogger.info('Deleted: $path', tag: 'DownloadDS');
+    } catch (e) {
+      AppLogger.error('Failed to delete path: $path', tag: 'DownloadDS', error: e);
+      throw DownloadException(message: 'Failed to delete: $path');
     }
   }
 }

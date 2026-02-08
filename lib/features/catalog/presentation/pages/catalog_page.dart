@@ -58,9 +58,7 @@ class _CatalogPageState extends State<CatalogPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _selectionMode
-            ? Text('${_selectedPackages.length} selected')
-            : const Text('Games'),
+        title: _selectionMode ? Text('${_selectedPackages.length} selected') : const Text('Games'),
         leading: _selectionMode
             ? IconButton(icon: const Icon(Icons.close), onPressed: _exitSelectionMode)
             : null,
@@ -106,73 +104,111 @@ class _CatalogPageState extends State<CatalogPage> {
               child: BlocBuilder<CatalogBloc, CatalogState>(
                 builder: (context, state) {
                   return switch (state) {
-                    CatalogInitial() ||
-                    CatalogLoading() =>
-                      const Center(child: CircularProgressIndicator()),
+                    CatalogInitial() => const Center(child: CircularProgressIndicator()),
+                    CatalogLoading(:final progress, :final message) => Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 200,
+                                child: LinearProgressIndicator(
+                                  value: progress,
+                                  minHeight: 6,
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                '${(progress * 100).toInt()}%',
+                                style: Theme.of(context).textTheme.headlineSmall,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                message,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     CatalogLoaded(:final filteredGames, :final searchQuery) => RefreshIndicator(
-                      onRefresh: () async {
-                        context.read<CatalogBloc>().add(const CatalogEvent.refresh());
-                      },
-                      child: filteredGames.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
+                        onRefresh: () async {
+                          context.read<CatalogBloc>().add(const CatalogEvent.refresh());
+                        },
+                        child: filteredGames.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      searchQuery.isNotEmpty
+                                          ? 'No games match "$searchQuery"'
+                                          : 'No games found',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : Column(
                                 children: [
-                                  const Icon(Icons.search_off, size: 64, color: Colors.grey),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    searchQuery.isNotEmpty
-                                        ? 'No games match "$searchQuery"'
-                                        : 'No games found',
-                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        'Showing ${filteredGames.length} games',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(color: Colors.grey),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: GameGrid(
+                                      games: filteredGames,
+                                      selectionMode: _selectionMode,
+                                      selectedPackages: _selectedPackages,
+                                      onSelectionToggle: _toggleSelection,
+                                    ),
                                   ),
                                 ],
                               ),
-                            )
-                          : Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      'Showing ${filteredGames.length} games',
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: GameGrid(
-                                    games: filteredGames,
-                                    selectionMode: _selectionMode,
-                                    selectedPackages: _selectedPackages,
-                                    onSelectionToggle: _toggleSelection,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
+                      ),
                     CatalogError(:final failure) => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                            const SizedBox(height: 16),
-                            Text(failure.userMessage, textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyLarge,),
-                            const SizedBox(height: 24),
-                            ElevatedButton.icon(
-                              onPressed: () =>
-                                  context.read<CatalogBloc>().add(const CatalogEvent.load()),
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Retry'),
-                            ),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text(
+                                failure.userMessage,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const SizedBox(height: 24),
+                              ElevatedButton.icon(
+                                onPressed: () =>
+                                    context.read<CatalogBloc>().add(const CatalogEvent.load()),
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                   };
                 },
               ),
@@ -189,7 +225,12 @@ class _CatalogPageState extends State<CatalogPage> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, -2))],
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, -2))
+                    ],
                   ),
                   child: ElevatedButton.icon(
                     onPressed: () => _downloadSelected(games),

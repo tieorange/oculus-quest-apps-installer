@@ -5,6 +5,7 @@ import 'package:injectable/injectable.dart';
 import 'package:quest_game_manager/core/utils/file_utils.dart';
 import 'package:quest_game_manager/features/config/data/models/public_config_model.dart';
 import 'package:quest_game_manager/features/config/domain/repositories/config_repository.dart';
+import 'package:quest_game_manager/features/downloads/domain/entities/storage_item.dart';
 import 'package:quest_game_manager/features/downloads/domain/repositories/download_repository.dart';
 
 /// Simple cubit for settings management.
@@ -46,6 +47,39 @@ class SettingsCubit extends Cubit<SettingsState> {
         emit(state.copyWith(clearingStatus: ClearingStatus.success));
         await loadDownloadsSize();
         await Future<void>.delayed(const Duration(seconds: 1));
+        emit(state.copyWith(clearingStatus: ClearingStatus.initial));
+      },
+    );
+  }
+
+  Future<void> loadStorageItems() async {
+    emit(state.copyWith(storageLoadStatus: StorageLoadStatus.loading));
+    final result = await _downloadRepository.getStorageItems();
+    result.fold(
+      (failure) => emit(state.copyWith(
+        storageLoadStatus: StorageLoadStatus.failure,
+        storageItems: [],
+      )),
+      (items) => emit(state.copyWith(
+        storageLoadStatus: StorageLoadStatus.success,
+        storageItems: items,
+      )),
+    );
+  }
+
+  Future<void> deleteStorageItems(List<StorageItem> items) async {
+    emit(state.copyWith(clearingStatus: ClearingStatus.loading));
+    final result = await _downloadRepository.deleteStorageItems(items);
+    result.fold(
+      (failure) => emit(state.copyWith(
+        clearingStatus: ClearingStatus.failure,
+        clearingError: failure.userMessage,
+      )),
+      (_) async {
+        emit(state.copyWith(clearingStatus: ClearingStatus.success));
+        await loadStorageItems();
+        await loadDownloadsSize();
+        await Future<void>.delayed(const Duration(milliseconds: 500));
         emit(state.copyWith(clearingStatus: ClearingStatus.initial));
       },
     );
@@ -98,6 +132,8 @@ enum ConfigSaveStatus { initial, loading, success, failure }
 
 enum ClearingStatus { initial, loading, success, failure }
 
+enum StorageLoadStatus { initial, loading, success, failure }
+
 class SettingsState {
   const SettingsState({
     this.autoRetryEnabled = true,
@@ -108,6 +144,8 @@ class SettingsState {
     this.clearingError,
     this.configSaveStatus = ConfigSaveStatus.initial,
     this.configSaveError,
+    this.storageItems = const [],
+    this.storageLoadStatus = StorageLoadStatus.initial,
   });
 
   final bool autoRetryEnabled;
@@ -118,6 +156,8 @@ class SettingsState {
   final String? clearingError;
   final ConfigSaveStatus configSaveStatus;
   final String? configSaveError;
+  final List<StorageItem> storageItems;
+  final StorageLoadStatus storageLoadStatus;
 
   SettingsState copyWith({
     bool? autoRetryEnabled,
@@ -128,6 +168,8 @@ class SettingsState {
     String? clearingError,
     ConfigSaveStatus? configSaveStatus,
     String? configSaveError,
+    List<StorageItem>? storageItems,
+    StorageLoadStatus? storageLoadStatus,
   }) {
     return SettingsState(
       autoRetryEnabled: autoRetryEnabled ?? this.autoRetryEnabled,
@@ -138,6 +180,8 @@ class SettingsState {
       clearingError: clearingError ?? this.clearingError,
       configSaveStatus: configSaveStatus ?? this.configSaveStatus,
       configSaveError: configSaveError ?? this.configSaveError,
+      storageItems: storageItems ?? this.storageItems,
+      storageLoadStatus: storageLoadStatus ?? this.storageLoadStatus,
     );
   }
 }

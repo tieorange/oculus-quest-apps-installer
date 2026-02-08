@@ -146,7 +146,13 @@ class MainActivity : FlutterActivity() {
                             val progress = extractedSize.toDouble() / totalSize.toDouble()
                             if (progress - lastProgress >= 0.01) { // Emit every 1%
                                 lastProgress = progress
-                                runOnUiThread { progressEventSink?.success(progress) }
+                                runOnUiThread {
+                                    progressEventSink?.success(mapOf(
+                                        "progress" to progress,
+                                        "extractedBytes" to extractedSize,
+                                        "totalBytes" to totalSize
+                                    ))
+                                }
                             }
                         }
                     }
@@ -154,7 +160,13 @@ class MainActivity : FlutterActivity() {
                 }
                 entry = sevenZFile.nextEntry
             }
-            runOnUiThread { progressEventSink?.success(1.0) }
+            runOnUiThread {
+                progressEventSink?.success(mapOf(
+                    "progress" to 1.0,
+                    "extractedBytes" to totalSize,
+                    "totalBytes" to totalSize
+                ))
+            }
         } finally {
             sevenZFile.close()
             channel.close()

@@ -9,7 +9,10 @@ part 'catalog_state.freezed.dart';
 @freezed
 sealed class CatalogState with _$CatalogState {
   const factory CatalogState.initial() = CatalogInitial;
-  const factory CatalogState.loading() = CatalogLoading;
+  const factory CatalogState.loading({
+    @Default(0.0) double progress,
+    @Default('Loading...') String message,
+  }) = CatalogLoading;
   const factory CatalogState.loaded({
     required List<Game> games,
     required List<Game> filteredGames,

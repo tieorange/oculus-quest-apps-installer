@@ -1,3 +1,4 @@
+import 'package:disk_space_2/disk_space_2.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:quest_game_manager/core/usecases/usecase.dart';
@@ -12,7 +13,7 @@ import 'package:quest_game_manager/features/config/domain/usecases/fetch_config.
 @injectable
 class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
   CatalogBloc(this._fetchConfig, this._getGameCatalog, this._searchGames)
-    : super(const CatalogState.initial()) {
+      : super(const CatalogState.initial()) {
     on<CatalogLoad>(_onLoad);
     on<CatalogRefresh>(_onRefresh);
     on<CatalogSearch>(_onSearch);
@@ -38,24 +39,47 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
   }
 
   Future<void> _loadCatalog(Emitter<CatalogState> emit) async {
+    // Step 1: Fetch config (0-10%)
+    emit(const CatalogState.loading(progress: 0.05, message: 'Fetching configuration...'));
     final configResult = await _fetchConfig(const NoParams());
 
-    await configResult.fold((failure) async => emit(CatalogState.error(failure)), (config) async {
-      final catalogResult = await _getGameCatalog(config);
-      catalogResult.fold(
-        (failure) => emit(CatalogState.error(failure)),
-        (games) => emit(
-          CatalogState.loaded(
-            games: games,
-            filteredGames: _sortGames(games, SortType.lastUpdated),
-            searchQuery: '',
-            sortType: SortType.lastUpdated,
-            filter: GameStatusFilter.all,
-            installedPackages: const {},
+    await configResult.fold(
+      (failure) async => emit(CatalogState.error(failure)),
+      (config) async {
+        // Step 2: Download & parse catalog (10-90%)
+        emit(const CatalogState.loading(progress: 0.10, message: 'Downloading catalog...'));
+        final catalogResult = await _getGameCatalog(config);
+
+        // Step 3: Fetch free space (90%)
+        emit(const CatalogState.loading(progress: 0.90, message: 'Checking storage...'));
+        final freeSpaceMb = await _getFreeSpace();
+
+        // Step 4: Complete (100%)
+        catalogResult.fold(
+          (failure) => emit(CatalogState.error(failure)),
+          (games) => emit(
+            CatalogState.loaded(
+              games: games,
+              filteredGames: _sortGames(games, SortType.lastUpdated),
+              searchQuery: '',
+              sortType: SortType.lastUpdated,
+              filter: GameStatusFilter.all,
+              installedPackages: const {},
+              freeSpaceMb: freeSpaceMb,
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
+  }
+
+  Future<int> _getFreeSpace() async {
+    try {
+      final space = await DiskSpace.getFreeDiskSpaceForPath('/data');
+      return space?.toInt() ?? 0;
+    } catch (_) {
+      return 0;
+    }
   }
 
   void _onSearch(CatalogSearch event, Emitter<CatalogState> emit) {

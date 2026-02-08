@@ -19,7 +19,7 @@ mixin _$CatalogState {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
-    required TResult Function() loading,
+    required TResult Function(double progress, String message) loading,
     required TResult Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -35,7 +35,7 @@ mixin _$CatalogState {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
-    TResult? Function()? loading,
+    TResult? Function(double progress, String message)? loading,
     TResult? Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -51,7 +51,7 @@ mixin _$CatalogState {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
-    TResult Function()? loading,
+    TResult Function(double progress, String message)? loading,
     TResult Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -149,7 +149,7 @@ class _$CatalogInitialImpl implements CatalogInitial {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
-    required TResult Function() loading,
+    required TResult Function(double progress, String message) loading,
     required TResult Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -168,7 +168,7 @@ class _$CatalogInitialImpl implements CatalogInitial {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
-    TResult? Function()? loading,
+    TResult? Function(double progress, String message)? loading,
     TResult? Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -187,7 +187,7 @@ class _$CatalogInitialImpl implements CatalogInitial {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
-    TResult Function()? loading,
+    TResult Function(double progress, String message)? loading,
     TResult Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -253,6 +253,8 @@ abstract class _$$CatalogLoadingImplCopyWith<$Res> {
   factory _$$CatalogLoadingImplCopyWith(_$CatalogLoadingImpl value,
           $Res Function(_$CatalogLoadingImpl) then) =
       __$$CatalogLoadingImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({double progress, String message});
 }
 
 /// @nodoc
@@ -262,32 +264,69 @@ class __$$CatalogLoadingImplCopyWithImpl<$Res>
   __$$CatalogLoadingImplCopyWithImpl(
       _$CatalogLoadingImpl _value, $Res Function(_$CatalogLoadingImpl) _then)
       : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? progress = null,
+    Object? message = null,
+  }) {
+    return _then(_$CatalogLoadingImpl(
+      progress: null == progress
+          ? _value.progress
+          : progress // ignore: cast_nullable_to_non_nullable
+              as double,
+      message: null == message
+          ? _value.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
 }
 
 /// @nodoc
 
 class _$CatalogLoadingImpl implements CatalogLoading {
-  const _$CatalogLoadingImpl();
+  const _$CatalogLoadingImpl(
+      {this.progress = 0.0, this.message = 'Loading...'});
+
+  @override
+  @JsonKey()
+  final double progress;
+  @override
+  @JsonKey()
+  final String message;
 
   @override
   String toString() {
-    return 'CatalogState.loading()';
+    return 'CatalogState.loading(progress: $progress, message: $message)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$CatalogLoadingImpl);
+        (other.runtimeType == runtimeType &&
+            other is _$CatalogLoadingImpl &&
+            (identical(other.progress, progress) ||
+                other.progress == progress) &&
+            (identical(other.message, message) || other.message == message));
   }
 
   @override
-  int get hashCode => runtimeType.hashCode;
+  int get hashCode => Object.hash(runtimeType, progress, message);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$CatalogLoadingImplCopyWith<_$CatalogLoadingImpl> get copyWith =>
+      __$$CatalogLoadingImplCopyWithImpl<_$CatalogLoadingImpl>(
+          this, _$identity);
 
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
-    required TResult Function() loading,
+    required TResult Function(double progress, String message) loading,
     required TResult Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -299,14 +338,14 @@ class _$CatalogLoadingImpl implements CatalogLoading {
         loaded,
     required TResult Function(Failure failure) error,
   }) {
-    return loading();
+    return loading(progress, message);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
-    TResult? Function()? loading,
+    TResult? Function(double progress, String message)? loading,
     TResult? Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -318,14 +357,14 @@ class _$CatalogLoadingImpl implements CatalogLoading {
         loaded,
     TResult? Function(Failure failure)? error,
   }) {
-    return loading?.call();
+    return loading?.call(progress, message);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
-    TResult Function()? loading,
+    TResult Function(double progress, String message)? loading,
     TResult Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -339,7 +378,7 @@ class _$CatalogLoadingImpl implements CatalogLoading {
     required TResult orElse(),
   }) {
     if (loading != null) {
-      return loading();
+      return loading(progress, message);
     }
     return orElse();
   }
@@ -383,7 +422,14 @@ class _$CatalogLoadingImpl implements CatalogLoading {
 }
 
 abstract class CatalogLoading implements CatalogState {
-  const factory CatalogLoading() = _$CatalogLoadingImpl;
+  const factory CatalogLoading({final double progress, final String message}) =
+      _$CatalogLoadingImpl;
+
+  double get progress;
+  String get message;
+  @JsonKey(ignore: true)
+  _$$CatalogLoadingImplCopyWith<_$CatalogLoadingImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -549,7 +595,7 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
-    required TResult Function() loading,
+    required TResult Function(double progress, String message) loading,
     required TResult Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -569,7 +615,7 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
-    TResult? Function()? loading,
+    TResult? Function(double progress, String message)? loading,
     TResult? Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -589,7 +635,7 @@ class _$CatalogLoadedImpl implements CatalogLoaded {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
-    TResult Function()? loading,
+    TResult Function(double progress, String message)? loading,
     TResult Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -744,7 +790,7 @@ class _$CatalogErrorImpl implements CatalogError {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
-    required TResult Function() loading,
+    required TResult Function(double progress, String message) loading,
     required TResult Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -763,7 +809,7 @@ class _$CatalogErrorImpl implements CatalogError {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
-    TResult? Function()? loading,
+    TResult? Function(double progress, String message)? loading,
     TResult? Function(
             List<Game> games,
             List<Game> filteredGames,
@@ -782,7 +828,7 @@ class _$CatalogErrorImpl implements CatalogError {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
-    TResult Function()? loading,
+    TResult Function(double progress, String message)? loading,
     TResult Function(
             List<Game> games,
             List<Game> filteredGames,

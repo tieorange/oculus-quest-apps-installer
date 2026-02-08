@@ -4,8 +4,8 @@ import 'package:quest_game_manager/core/constants/app_constants.dart';
 import 'package:quest_game_manager/core/utils/file_utils.dart';
 import 'package:quest_game_manager/features/downloads/data/datasources/download_stats_datasource.dart';
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart';
-import 'package:quest_game_manager/features/settings/presentation/widgets/clear_downloads_dialog.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_section.dart';
+import 'package:quest_game_manager/features/settings/presentation/widgets/storage_management_dialog.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_tile.dart';
 import 'package:quest_game_manager/injection.dart';
 
@@ -72,13 +72,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     SettingsTile.action(
                       leading: const Icon(Icons.cleaning_services),
-                      title: 'Clean Up Downloads',
-                      subtitle: 'Free up space by removing installers',
+                      title: 'Manage Storage',
+                      subtitle: 'View and delete installers & game data',
                       trailing: Text(
                         _formatSize(state.downloadsSize),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      onTap: () => _showClearDownloadsDialog(context),
+                      onTap: () => StorageManagementDialog.show(context),
                     ),
                     _CacheSizeTile(),
                     SettingsTile.action(
@@ -118,13 +118,6 @@ class _SettingsPageState extends State<SettingsPage> {
           },
         ),
       ),
-    );
-  }
-
-  void _showClearDownloadsDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => const ClearDownloadsDialog(),
     );
   }
 

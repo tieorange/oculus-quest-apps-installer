@@ -1,60 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:quest_game_manager/core/utils/file_utils.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quest_game_manager/features/catalog/presentation/bloc/catalog_bloc.dart';
+import 'package:quest_game_manager/features/catalog/presentation/bloc/catalog_state.dart';
 
-/// Widget displaying available storage space with live data.
-class StorageIndicator extends StatefulWidget {
+/// Widget displaying available storage space from CatalogBloc state.
+class StorageIndicator extends StatelessWidget {
   const StorageIndicator({super.key});
 
   @override
-  State<StorageIndicator> createState() => _StorageIndicatorState();
-}
-
-class _StorageIndicatorState extends State<StorageIndicator> {
-  int _freeSpaceMb = -1;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSpace();
-  }
-
-  Future<void> _loadSpace() async {
-    final free = await FileUtils.getFreeSpaceMb('/data');
-    if (mounted) {
-      setState(() => _freeSpaceMb = free);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (_freeSpaceMb < 0) {
-      return const SizedBox.shrink();
-    }
+    return BlocBuilder<CatalogBloc, CatalogState>(
+      builder: (context, state) {
+        final freeSpaceMb = state.maybeMap(
+          loaded: (s) => s.freeSpaceMb,
+          orElse: () => 0,
+        );
 
-    final freeGb = _freeSpaceMb / 1024;
-    final color = freeGb < 2
-        ? Colors.red
-        : freeGb < 10
-            ? Colors.orange
-            : Theme.of(context).colorScheme.primary;
+        if (freeSpaceMb <= 0) {
+          return const SizedBox.shrink();
+        }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.storage, size: 16, color: color),
-          const SizedBox(width: 6),
-          Text(
-            '${freeGb.toStringAsFixed(1)} GB free',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
+        final freeGb = freeSpaceMb / 1024;
+        final color = freeGb < 2
+            ? Colors.red
+            : freeGb < 10
+                ? Colors.orange
+                : Theme.of(context).colorScheme.primary;
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.storage, size: 16, color: color),
+              const SizedBox(width: 6),
+              Text(
+                '${freeGb.toStringAsFixed(1)} GB free',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
