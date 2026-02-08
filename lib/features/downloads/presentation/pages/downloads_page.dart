@@ -6,6 +6,7 @@ import 'package:quest_game_manager/features/downloads/presentation/bloc/download
 import 'package:quest_game_manager/features/downloads/presentation/bloc/downloads_state.dart';
 import 'package:quest_game_manager/features/downloads/presentation/widgets/download_item.dart';
 import 'package:quest_game_manager/features/downloads/presentation/widgets/empty_downloads.dart';
+import 'package:quest_game_manager/features/settings/presentation/widgets/clear_downloads_dialog.dart';
 
 /// Page displaying download queue with pipeline progress.
 class DownloadsPage extends StatelessWidget {
@@ -22,14 +23,24 @@ class DownloadsPage extends StatelessWidget {
               if (state is! DownloadsLoaded || state.queue.isEmpty) {
                 return const SizedBox.shrink();
               }
-              final hasActive = state.queue.any((t) =>
-                  t.status == DownloadStatus.downloading ||
-                  t.status == DownloadStatus.extracting ||
-                  t.status == DownloadStatus.installing,);
+              final hasActive = state.queue.any(
+                (t) =>
+                    t.status == DownloadStatus.downloading ||
+                    t.status == DownloadStatus.extracting ||
+                    t.status == DownloadStatus.installing,
+              );
               final hasPaused = state.queue.any((t) => t.status == DownloadStatus.paused);
 
               return Row(
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.cleaning_services_outlined),
+                    tooltip: 'Clean Up Downloads',
+                    onPressed: () => showDialog<void>(
+                      context: context,
+                      builder: (_) => const ClearDownloadsDialog(),
+                    ),
+                  ),
                   if (hasActive)
                     IconButton(
                       icon: const Icon(Icons.pause_circle_outline),
@@ -71,8 +82,8 @@ class DownloadsPage extends StatelessWidget {
                       },
                     ),
               DownloadsError(:final failure) => Center(
-                child: Text(failure.userMessage),
-              ),
+                  child: Text(failure.userMessage),
+                ),
             };
           },
         ),

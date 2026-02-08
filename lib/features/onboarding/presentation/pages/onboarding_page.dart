@@ -75,71 +75,85 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            children: [
-              const Spacer(),
-              const Icon(Icons.sports_esports, size: 80, color: Color(0xFF00D9FF)),
-              const SizedBox(height: 24),
-              Text(
-                'Quest Game Manager',
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Browse, download, and install Quest games',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-              _buildStep(
-                index: 0,
-                icon: Icons.folder_open,
-                title: 'Storage Access',
-                description:
-                    'Required to save downloaded games and manage OBB files on your device.',
-                granted: _storageGranted,
-                onRequest: _requestStoragePermission,
-              ),
-              const SizedBox(height: 16),
-              _buildStep(
-                index: 1,
-                icon: Icons.install_mobile,
-                title: 'Install Packages',
-                description: 'Required to install downloaded game APKs on your Quest.',
-                granted: _installGranted,
-                onRequest: _requestInstallPermission,
-              ),
-              const SizedBox(height: 16),
-              _buildStep(
-                index: 2,
-                icon: Icons.check_circle,
-                title: 'All Set!',
-                description: "You're ready to browse and install Quest games.",
-                granted: _currentStep >= 2,
-                onRequest: null,
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _currentStep >= 2 ? _finish : null,
-                  child: const Text('Get Started'),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
                 ),
-              ),
-              const SizedBox(height: 16),
-              if (_currentStep < 2)
-                TextButton(
-                  onPressed: _finish,
-                  child: Text(
-                    'Skip for now',
-                    style: TextStyle(color: Colors.grey[600]),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      children: [
+                        const Spacer(),
+                        const Icon(Icons.sports_esports, size: 80, color: Color(0xFF00D9FF)),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Quest Game Manager',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Browse, download, and install Quest games',
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 48),
+                        _buildStep(
+                          index: 0,
+                          icon: Icons.folder_open,
+                          title: 'Storage Access',
+                          description:
+                              'Required to save downloaded games and manage OBB files on your device.',
+                          granted: _storageGranted,
+                          onRequest: _requestStoragePermission,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildStep(
+                          index: 1,
+                          icon: Icons.install_mobile,
+                          title: 'Install Packages',
+                          description: 'Required to install downloaded game APKs on your Quest.',
+                          granted: _installGranted,
+                          onRequest: _requestInstallPermission,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildStep(
+                          index: 2,
+                          icon: Icons.check_circle,
+                          title: 'All Set!',
+                          description: "You're ready to browse and install Quest games.",
+                          granted: _currentStep >= 2,
+                          onRequest: null,
+                        ),
+                        const Spacer(),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _currentStep >= 2 ? _finish : null,
+                            child: const Text('Get Started'),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (_currentStep < 2)
+                          TextButton(
+                            onPressed: _finish,
+                            child: Text(
+                              'Skip for now',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-            ],
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

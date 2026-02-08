@@ -34,12 +34,13 @@ class SettingsTile extends StatelessWidget {
     required VoidCallback onTap,
     Widget? leading,
     String? subtitle,
+    Widget? trailing,
   }) {
     return SettingsTile(
       leading: leading,
       title: title,
       subtitle: subtitle,
-      trailing: const Icon(Icons.chevron_right),
+      trailing: trailing ?? const Icon(Icons.chevron_right),
       onTap: onTap,
     );
   }

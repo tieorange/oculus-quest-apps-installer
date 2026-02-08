@@ -9,4 +9,7 @@ abstract class DownloadRepository {
   Future<Either<Failure, void>> cancelDownload(String gameId);
   Future<Either<Failure, List<DownloadTask>>> getSavedQueue();
   Future<Either<Failure, void>> saveQueue(List<DownloadTask> queue);
+
+  Future<Either<Failure, int>> getDownloadsSize();
+  Future<Either<Failure, void>> clearDownloads();
 }

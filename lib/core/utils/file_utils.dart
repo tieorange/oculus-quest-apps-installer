@@ -65,19 +65,23 @@ class FileUtils {
   static Future<int> getCacheSize() async {
     try {
       final cacheDir = await getApplicationCacheDirectory();
-      return _directorySize(cacheDir);
+      return getDirectorySize(cacheDir);
     } catch (_) {
       return 0;
     }
   }
 
-  static Future<int> _directorySize(Directory dir) async {
+  static Future<int> getDirectorySize(Directory dir) async {
     var size = 0;
     if (!dir.existsSync()) return 0;
-    await for (final entity in dir.list(recursive: true, followLinks: false)) {
-      if (entity is File) {
-        size += await entity.length();
+    try {
+      await for (final entity in dir.list(recursive: true, followLinks: false)) {
+        if (entity is File) {
+          size += await entity.length();
+        }
       }
+    } catch (_) {
+      // Ignore errors (e.g. permission denied)
     }
     return size;
   }

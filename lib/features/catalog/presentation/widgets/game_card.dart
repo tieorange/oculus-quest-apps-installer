@@ -31,7 +31,8 @@ class GameCard extends StatelessWidget {
         final isInstalled = installed.contains(game.packageName);
         final installedVersion = context.read<InstallerBloc>().installedVersions[game.packageName];
         final catalogVersion = int.tryParse(game.versionCode) ?? 0;
-        final hasUpdate = isInstalled && installedVersion != null && catalogVersion > installedVersion;
+        final hasUpdate =
+            isInstalled && installedVersion != null && catalogVersion > installedVersion;
 
         return Card(
           clipBehavior: Clip.antiAlias,
@@ -57,7 +58,10 @@ class GameCard extends StatelessWidget {
               height: 100,
               child: Row(
                 children: [
-                  SizedBox(width: 100, child: _Thumbnail(game: game, isInstalled: isInstalled, hasUpdate: hasUpdate)),
+                  SizedBox(
+                      width: 100,
+                      child:
+                          _Thumbnail(game: game, isInstalled: isInstalled, hasUpdate: hasUpdate)),
                   Expanded(child: _GameInfo(game: game)),
                 ],
               ),
@@ -85,8 +89,11 @@ class _Thumbnail extends StatelessWidget {
           builder: (context, snapshot) {
             final path = snapshot.data;
             if (path != null) {
-              return Image.file(File(path), fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholder(),);
+              return Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _placeholder(),
+              );
             }
             return _placeholder();
           },
@@ -101,8 +108,10 @@ class _Thumbnail extends StatelessWidget {
                 color: AppTheme.warning,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text('UPDATE',
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black),),
+              child: const Text(
+                'UPDATE',
+                style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black),
+              ),
             ),
           )
         else if (isInstalled)
@@ -115,8 +124,10 @@ class _Thumbnail extends StatelessWidget {
                 color: AppTheme.success,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text('INSTALLED',
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),),
+              child: const Text(
+                'INSTALLED',
+                style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
             ),
           ),
       ],
@@ -150,20 +161,32 @@ class _GameInfo extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(game.name, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleSmall,),
+          Text(
+            game.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
           const SizedBox(height: 6),
           Row(
             children: [
               const Icon(Icons.storage, size: 12, color: Colors.grey),
               const SizedBox(width: 4),
-              Text('${game.sizeMb} MB',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),),
+              Text(
+                '${game.sizeMb} MB',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+              ),
               const SizedBox(width: 12),
               const Icon(Icons.update, size: 12, color: Colors.grey),
               const SizedBox(width: 4),
-              Text(game.lastUpdated,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),),
+              Flexible(
+                child: Text(
+                  game.lastUpdated,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
             ],
           ),
         ],

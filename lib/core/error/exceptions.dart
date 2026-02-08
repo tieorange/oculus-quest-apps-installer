@@ -20,6 +20,9 @@ class StorageException implements Exception {
 class ExtractionException implements Exception {
   const ExtractionException({required this.message});
   final String message;
+
+  @override
+  String toString() => message;
 }
 
 class InstallationException implements Exception {

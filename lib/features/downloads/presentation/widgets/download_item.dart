@@ -28,9 +28,12 @@ class DownloadItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(task.game.name,
-                          style: Theme.of(context).textTheme.titleMedium,
-                          maxLines: 1, overflow: TextOverflow.ellipsis,),
+                      Text(
+                        task.game.name,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 4),
                       _StatusLabel(task: task),
                     ],
@@ -78,38 +81,37 @@ class DownloadItem extends StatelessWidget {
 
   Widget _buildActions(BuildContext context) {
     return switch (task.status) {
-      DownloadStatus.queued ||
-      DownloadStatus.downloading ||
-      DownloadStatus.paused => IconButton(
-        icon: const Icon(Icons.close),
-        tooltip: 'Cancel',
-        onPressed: () => context.read<DownloadsBloc>().add(DownloadsEvent.cancel(task.gameId)),
-      ),
+      DownloadStatus.queued || DownloadStatus.downloading || DownloadStatus.paused => IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: 'Cancel',
+          onPressed: () => context.read<DownloadsBloc>().add(DownloadsEvent.cancel(task.gameId)),
+        ),
       DownloadStatus.failed => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Retry',
-            onPressed: () => context.read<DownloadsBloc>().add(DownloadsEvent.retry(task.gameId)),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            tooltip: 'Remove',
-            onPressed: () => context.read<DownloadsBloc>().add(DownloadsEvent.remove(task.gameId)),
-          ),
-        ],
-      ),
-      DownloadStatus.extracting ||
-      DownloadStatus.installing => const SizedBox(
-        width: 24, height: 24,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Retry',
+              onPressed: () => context.read<DownloadsBloc>().add(DownloadsEvent.retry(task.gameId)),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Remove',
+              onPressed: () =>
+                  context.read<DownloadsBloc>().add(DownloadsEvent.remove(task.gameId)),
+            ),
+          ],
+        ),
+      DownloadStatus.extracting || DownloadStatus.installing => const SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
       DownloadStatus.completed => IconButton(
-        icon: const Icon(Icons.check_circle, color: AppTheme.success),
-        tooltip: 'Done',
-        onPressed: () => context.read<DownloadsBloc>().add(DownloadsEvent.remove(task.gameId)),
-      ),
+          icon: const Icon(Icons.check_circle, color: AppTheme.success),
+          tooltip: 'Done',
+          onPressed: () => context.read<DownloadsBloc>().add(DownloadsEvent.remove(task.gameId)),
+        ),
     };
   }
 }
@@ -160,14 +162,41 @@ class _ProgressDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+    String? etaString;
+    if (task.eta != null) {
+      final inSeconds = task.eta!.inSeconds;
+      if (inSeconds < 60) {
+        etaString = '${inSeconds}s';
+      } else if (inSeconds < 3600) {
+        etaString = '${(inSeconds / 60).ceil()}m';
+      } else {
+        etaString = '${(inSeconds / 3600).toStringAsFixed(1)}h';
+      }
+    }
+
+    return Column(
       children: [
-        Text('${(task.progress * 100).toStringAsFixed(0)}%', style: style),
-        if (task.pipelineStage == PipelineStage.downloading && task.speedBytesPerSecond > 0)
-          Text(FileUtils.formatSpeed(task.speedBytesPerSecond), style: style),
-        if (task.bytesReceived > 0)
-          Text(FileUtils.formatBytes(task.bytesReceived), style: style),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('${(task.progress * 100).toStringAsFixed(0)}%', style: style),
+            if (task.pipelineStage == PipelineStage.downloading && task.speedBytesPerSecond > 0)
+              Text(FileUtils.formatSpeed(task.speedBytesPerSecond), style: style),
+            if (task.bytesReceived > 0)
+              Text(FileUtils.formatBytes(task.bytesReceived), style: style),
+          ],
+        ),
+        if (etaString != null) ...[
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'ETA: $etaString',
+              style: style?.copyWith(fontSize: 10, color: Colors.grey[600]),
+            ),
+          ),
+        ],
       ],
     );
   }

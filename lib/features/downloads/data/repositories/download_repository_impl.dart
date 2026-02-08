@@ -67,11 +67,13 @@ class DownloadRepositoryImpl implements DownloadRepository {
             DownloadStatus.failed => DownloadStatus.failed,
             _ => DownloadStatus.failed, // interrupted downloads become failed
           };
-          tasks.add(DownloadTask(
-            game: game,
-            gameId: map['gameId'] as String? ?? '',
-            status: restoredStatus,
-          ),);
+          tasks.add(
+            DownloadTask(
+              game: game,
+              gameId: map['gameId'] as String? ?? '',
+              status: restoredStatus,
+            ),
+          );
         } catch (e) {
           AppLogger.warning('Skipping corrupted queue entry: $key', tag: 'DownloadRepo');
         }
@@ -105,6 +107,29 @@ class DownloadRepositoryImpl implements DownloadRepository {
     } catch (e, st) {
       AppLogger.error('Failed to save queue', tag: 'DownloadRepo', error: e, stackTrace: st);
       return const Left(StorageFailure(message: 'Failed to save download queue'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> getDownloadsSize() async {
+    try {
+      final size = await _remoteDatasource.getDownloadsSize();
+      return Right(size);
+    } catch (e, st) {
+      AppLogger.error('Failed to get downloads size',
+          tag: 'DownloadRepo', error: e, stackTrace: st);
+      return Left(StorageFailure(message: 'Failed to get downloads size'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> clearDownloads() async {
+    try {
+      await _remoteDatasource.clearDownloads();
+      return const Right(null);
+    } catch (e, st) {
+      AppLogger.error('Failed to clear downloads', tag: 'DownloadRepo', error: e, stackTrace: st);
+      return Left(StorageFailure(message: 'Failed to clear downloads'));
     }
   }
 

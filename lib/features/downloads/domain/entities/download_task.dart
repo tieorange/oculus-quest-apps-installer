@@ -11,6 +11,7 @@ class DownloadTask extends Equatable {
     this.bytesReceived = 0,
     this.totalBytes = 0,
     this.speedBytesPerSecond = 0,
+    this.eta,
     this.currentPart = 0,
     this.totalParts = 0,
     this.pipelineStage = PipelineStage.downloading,
@@ -23,6 +24,7 @@ class DownloadTask extends Equatable {
   final int bytesReceived;
   final int totalBytes;
   final double speedBytesPerSecond;
+  final Duration? eta;
   final int currentPart;
   final int totalParts;
   final PipelineStage pipelineStage;
@@ -35,6 +37,7 @@ class DownloadTask extends Equatable {
     int? bytesReceived,
     int? totalBytes,
     double? speedBytesPerSecond,
+    Duration? eta,
     int? currentPart,
     int? totalParts,
     PipelineStage? pipelineStage,
@@ -47,6 +50,7 @@ class DownloadTask extends Equatable {
       bytesReceived: bytesReceived ?? this.bytesReceived,
       totalBytes: totalBytes ?? this.totalBytes,
       speedBytesPerSecond: speedBytesPerSecond ?? this.speedBytesPerSecond,
+      eta: eta ?? this.eta,
       currentPart: currentPart ?? this.currentPart,
       totalParts: totalParts ?? this.totalParts,
       pipelineStage: pipelineStage ?? this.pipelineStage,
@@ -54,7 +58,7 @@ class DownloadTask extends Equatable {
   }
 
   @override
-  List<Object?> get props => [gameId, status, progress, pipelineStage];
+  List<Object?> get props => [gameId, status, progress, pipelineStage, eta];
 }
 
 enum DownloadStatus { queued, downloading, paused, extracting, installing, completed, failed }

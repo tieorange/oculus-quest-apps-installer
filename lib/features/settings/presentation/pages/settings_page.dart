@@ -4,13 +4,26 @@ import 'package:quest_game_manager/core/constants/app_constants.dart';
 import 'package:quest_game_manager/core/utils/file_utils.dart';
 import 'package:quest_game_manager/features/downloads/data/datasources/download_stats_datasource.dart';
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart';
+import 'package:quest_game_manager/features/settings/presentation/widgets/clear_downloads_dialog.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_section.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_tile.dart';
 import 'package:quest_game_manager/injection.dart';
 
 /// Settings page for app configuration.
-class SettingsPage extends StatelessWidget {
+/// Settings page for app configuration.
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<SettingsCubit>().loadDownloadsSize();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +70,16 @@ class SettingsPage extends StatelessWidget {
                 SettingsSection(
                   title: 'Storage',
                   children: [
+                    SettingsTile.action(
+                      leading: const Icon(Icons.cleaning_services),
+                      title: 'Clean Up Downloads',
+                      subtitle: 'Free up space by removing installers',
+                      trailing: Text(
+                        _formatSize(state.downloadsSize),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      onTap: () => _showClearDownloadsDialog(context),
+                    ),
                     _CacheSizeTile(),
                     SettingsTile.action(
                       leading: const Icon(Icons.delete_sweep),
@@ -96,6 +119,22 @@ class SettingsPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showClearDownloadsDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => const ClearDownloadsDialog(),
+    );
+  }
+
+  String _formatSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
   }
 
   void _showClearCacheDialog(BuildContext context) {

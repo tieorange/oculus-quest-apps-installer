@@ -77,10 +77,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i361.Dio>(() => registerModule.dio);
     gh.lazySingleton<_i251.ConfigLocalDatasource>(
         () => _i251.ConfigLocalDatasource());
-    gh.lazySingleton<_i418.CatalogLocalDatasource>(
-        () => _i418.CatalogLocalDatasource());
     gh.lazySingleton<_i607.FavoritesLocalDatasource>(
         () => _i607.FavoritesLocalDatasource());
+    gh.lazySingleton<_i418.CatalogLocalDatasource>(
+        () => _i418.CatalogLocalDatasource());
     gh.lazySingleton<_i798.InstallerDatasource>(
         () => _i798.InstallerDatasource());
     gh.lazySingleton<_i336.DownloadStatsDatasource>(
@@ -113,6 +113,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i803.ConfigRemoteDatasource>(),
           gh<_i251.ConfigLocalDatasource>(),
         ));
+    gh.factory<_i261.SettingsCubit>(() => _i261.SettingsCubit(
+          gh<_i118.ConfigRepository>(),
+          gh<_i269.DownloadRepository>(),
+        ));
     gh.factory<_i505.DownloadsBloc>(() => _i505.DownloadsBloc(
           gh<_i269.DownloadRepository>(),
           gh<_i118.ConfigRepository>(),
@@ -124,8 +128,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i751.GetGameCatalog>(),
           gh<_i259.SearchGames>(),
         ));
-    gh.factory<_i261.SettingsCubit>(
-        () => _i261.SettingsCubit(gh<_i118.ConfigRepository>()));
     return this;
   }
 }
