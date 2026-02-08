@@ -1,14 +1,9 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:quest_game_manager/core/constants/app_constants.dart';
 import 'package:quest_game_manager/core/utils/app_logger.dart';
 import 'package:quest_game_manager/features/catalog/domain/entities/game.dart';
-import 'package:quest_game_manager/features/config/domain/entities/public_config.dart';
 import 'package:quest_game_manager/features/installer/data/datasources/installer_datasource.dart';
 import 'package:quest_game_manager/features/installer/domain/repositories/installer_repository.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -62,6 +57,9 @@ class InstallerBloc extends Bloc<InstallerEvent, InstallerState> {
 
   final InstallerRepository _repository;
   final InstallerDatasource _datasource;
+
+  /// Maps packageName -> installed version code. Populated during refreshInstalled.
+  final Map<String, int> installedVersions = {};
 
   Set<String> get _currentInstalled => switch (state) {
         InstallerIdle(:final installedPackages) => installedPackages,
@@ -171,6 +169,13 @@ class InstallerBloc extends Bloc<InstallerEvent, InstallerState> {
         emit(InstallerState.idle(installedPackages: installed));
       },
     );
+    // Fetch version info for installed packages
+    for (final pkg in _currentInstalled) {
+      try {
+        final version = await _datasource.getInstalledVersion(pkg);
+        if (version > 0) installedVersions[pkg] = version;
+      } catch (_) {}
+    }
   }
 
   Future<void> _onUninstall(InstallerUninstall event, Emitter<InstallerState> emit) async {

@@ -32,7 +32,8 @@ class SortFilterBar extends StatelessWidget {
                   underline: const SizedBox(),
                   items: const [
                     DropdownMenuItem(value: SortType.lastUpdated, child: Text('Recent')),
-                    DropdownMenuItem(value: SortType.name, child: Text('Name')),
+                    DropdownMenuItem(value: SortType.name, child: Text('Name (A-Z)')),
+                    DropdownMenuItem(value: SortType.nameDesc, child: Text('Name (Z-A)')),
                     DropdownMenuItem(value: SortType.size, child: Text('Size')),
                   ],
                   onChanged: (value) {

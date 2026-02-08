@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:quest_game_manager/app.dart';
+import 'package:quest_game_manager/core/services/connectivity_service.dart';
 import 'package:quest_game_manager/core/utils/app_logger.dart';
 import 'package:quest_game_manager/features/catalog/data/models/game_info_model.dart';
+import 'package:quest_game_manager/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:quest_game_manager/injection.dart';
 
 Future<void> main() async {
@@ -26,5 +28,11 @@ Future<void> main() async {
   // Configure dependency injection
   await configureDependencies();
 
-  runApp(const QuestGameManagerApp());
+  // Start connectivity monitoring
+  ConnectivityService.instance.startMonitoring();
+
+  // Check onboarding status
+  final onboardingComplete = await OnboardingPage.isComplete();
+
+  runApp(QuestGameManagerApp(showOnboarding: !onboardingComplete));
 }

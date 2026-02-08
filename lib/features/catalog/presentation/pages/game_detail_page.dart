@@ -117,7 +117,7 @@ class GameDetailPage extends StatelessWidget {
               ],
 
               // Game notes
-              _GameNotes(packageName: game.packageName),
+              _NotesSection(packageName: game.packageName),
 
               const SizedBox(height: 24),
 
@@ -216,8 +216,8 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-class _GameNotes extends StatelessWidget {
-  const _GameNotes({required this.packageName});
+class _NotesSection extends StatelessWidget {
+  const _NotesSection({required this.packageName});
   final String packageName;
 
   @override
@@ -235,7 +235,13 @@ class _GameNotes extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Notes', style: Theme.of(context).textTheme.titleSmall),
+              Row(
+                children: [
+                  Icon(Icons.notes, size: 20, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text('Notes', style: Theme.of(context).textTheme.titleSmall),
+                ],
+              ),
               const SizedBox(height: 8),
               Text(snapshot.data!, style: Theme.of(context).textTheme.bodyMedium),
             ],

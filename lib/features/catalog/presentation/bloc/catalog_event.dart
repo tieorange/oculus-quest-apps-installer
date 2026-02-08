@@ -14,4 +14,4 @@ sealed class CatalogEvent with _$CatalogEvent {
 
 enum GameStatusFilter { all, installed, notInstalled }
 
-enum SortType { name, lastUpdated, size }
+enum SortType { name, nameDesc, lastUpdated, size }

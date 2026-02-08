@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quest_game_manager/core/constants/app_constants.dart';
 import 'package:quest_game_manager/core/utils/file_utils.dart';
+import 'package:quest_game_manager/features/downloads/data/datasources/download_stats_datasource.dart';
 import 'package:quest_game_manager/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_section.dart';
 import 'package:quest_game_manager/features/settings/presentation/widgets/settings_tile.dart';
@@ -64,6 +65,8 @@ class SettingsPage extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                const _DownloadStatsSection(),
                 const SizedBox(height: 16),
                 SettingsSection(
                   title: 'About',
@@ -221,6 +224,81 @@ class _CacheSizeTileState extends State<_CacheSizeTile> {
       leading: const Icon(Icons.folder),
       title: 'Cache size',
       trailing: Text(_cacheSize, style: Theme.of(context).textTheme.bodySmall),
+    );
+  }
+}
+
+class _DownloadStatsSection extends StatefulWidget {
+  const _DownloadStatsSection();
+
+  @override
+  State<_DownloadStatsSection> createState() => _DownloadStatsSectionState();
+}
+
+class _DownloadStatsSectionState extends State<_DownloadStatsSection> {
+  DownloadStats? _stats;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final datasource = DownloadStatsDatasource();
+    final stats = await datasource.getStats();
+    if (mounted) setState(() => _stats = stats);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stats = _stats;
+    return SettingsSection(
+      title: 'Download Statistics',
+      children: [
+        SettingsTile(
+          leading: const Icon(Icons.cloud_download),
+          title: 'Total downloaded',
+          trailing: Text(
+            stats?.totalFormatted ?? '...',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        SettingsTile(
+          leading: const Icon(Icons.games),
+          title: 'Games installed',
+          trailing: Text(
+            '${stats?.totalGamesInstalled ?? 0}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        SettingsTile(
+          leading: const Icon(Icons.speed),
+          title: 'Average speed',
+          trailing: Text(
+            stats?.avgSpeedFormatted ?? '...',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        SettingsTile(
+          leading: const Icon(Icons.trending_up),
+          title: 'Peak speed',
+          trailing: Text(
+            stats?.peakSpeedFormatted ?? '...',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        SettingsTile(
+          leading: const Icon(Icons.today),
+          title: 'This session',
+          trailing: Text(
+            stats != null
+                ? '${stats.sessionGamesInstalled} games, ${stats.sessionFormatted}'
+                : '...',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+      ],
     );
   }
 }

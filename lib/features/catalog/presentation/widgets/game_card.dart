@@ -29,6 +29,9 @@ class GameCard extends StatelessWidget {
           InstallerFailed(:final installedPackages) => installedPackages,
         };
         final isInstalled = installed.contains(game.packageName);
+        final installedVersion = context.read<InstallerBloc>().installedVersions[game.packageName];
+        final catalogVersion = int.tryParse(game.versionCode) ?? 0;
+        final hasUpdate = isInstalled && installedVersion != null && catalogVersion > installedVersion;
 
         return Card(
           clipBehavior: Clip.antiAlias,
@@ -42,7 +45,11 @@ class GameCard extends StatelessWidget {
                     BlocProvider.value(value: context.read<DownloadsBloc>()),
                     BlocProvider.value(value: context.read<FavoritesCubit>()),
                   ],
-                  child: GameDetailPage(game: game, isInstalled: isInstalled),
+                  child: GameDetailPage(
+                    game: game,
+                    isInstalled: isInstalled,
+                    installedVersion: installedVersion,
+                  ),
                 ),
               ),
             ),
@@ -50,7 +57,7 @@ class GameCard extends StatelessWidget {
               height: 100,
               child: Row(
                 children: [
-                  SizedBox(width: 100, child: _Thumbnail(game: game, isInstalled: isInstalled)),
+                  SizedBox(width: 100, child: _Thumbnail(game: game, isInstalled: isInstalled, hasUpdate: hasUpdate)),
                   Expanded(child: _GameInfo(game: game)),
                 ],
               ),
@@ -63,9 +70,10 @@ class GameCard extends StatelessWidget {
 }
 
 class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.game, required this.isInstalled});
+  const _Thumbnail({required this.game, required this.isInstalled, this.hasUpdate = false});
   final Game game;
   final bool isInstalled;
+  final bool hasUpdate;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +91,21 @@ class _Thumbnail extends StatelessWidget {
             return _placeholder();
           },
         ),
-        if (isInstalled)
+        if (hasUpdate)
+          Positioned(
+            top: 4,
+            left: 4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.warning,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text('UPDATE',
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black)),
+            ),
+          )
+        else if (isInstalled)
           Positioned(
             top: 4,
             left: 4,

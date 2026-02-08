@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quest_game_manager/features/catalog/domain/entities/game.dart';
 import 'package:quest_game_manager/features/catalog/presentation/bloc/catalog_bloc.dart';
 import 'package:quest_game_manager/features/catalog/presentation/bloc/catalog_event.dart';
 import 'package:quest_game_manager/features/catalog/presentation/bloc/catalog_state.dart';
@@ -7,17 +8,94 @@ import 'package:quest_game_manager/features/catalog/presentation/widgets/game_gr
 import 'package:quest_game_manager/features/catalog/presentation/widgets/search_bar_widget.dart';
 import 'package:quest_game_manager/features/catalog/presentation/widgets/sort_filter_bar.dart';
 import 'package:quest_game_manager/features/catalog/presentation/widgets/storage_indicator.dart';
+import 'package:quest_game_manager/features/downloads/presentation/bloc/downloads_bloc.dart';
+import 'package:quest_game_manager/features/downloads/presentation/bloc/downloads_event.dart';
 
-/// Main catalog page displaying game grid.
-class CatalogPage extends StatelessWidget {
+/// Main catalog page displaying game grid with batch select support.
+class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
+
+  @override
+  State<CatalogPage> createState() => _CatalogPageState();
+}
+
+class _CatalogPageState extends State<CatalogPage> {
+  bool _selectionMode = false;
+  final Set<String> _selectedPackages = {};
+
+  void _toggleSelection(Game game) {
+    setState(() {
+      if (_selectedPackages.contains(game.packageName)) {
+        _selectedPackages.remove(game.packageName);
+        if (_selectedPackages.isEmpty) _selectionMode = false;
+      } else {
+        _selectedPackages.add(game.packageName);
+      }
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _selectionMode = false;
+      _selectedPackages.clear();
+    });
+  }
+
+  void _downloadSelected(List<Game> allGames) {
+    final bloc = context.read<DownloadsBloc>();
+    for (final game in allGames) {
+      if (_selectedPackages.contains(game.packageName)) {
+        bloc.add(DownloadsEvent.download(game));
+      }
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Added ${_selectedPackages.length} games to download queue')),
+    );
+    _exitSelectionMode();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Games'),
-        actions: const [StorageIndicator(), SizedBox(width: 16)],
+        title: _selectionMode
+            ? Text('${_selectedPackages.length} selected')
+            : const Text('Games'),
+        leading: _selectionMode
+            ? IconButton(icon: const Icon(Icons.close), onPressed: _exitSelectionMode)
+            : null,
+        actions: [
+          if (!_selectionMode) ...[
+            IconButton(
+              icon: const Icon(Icons.checklist),
+              tooltip: 'Batch select',
+              onPressed: () => setState(() => _selectionMode = true),
+            ),
+            const StorageIndicator(),
+            const SizedBox(width: 16),
+          ],
+          if (_selectionMode)
+            BlocBuilder<CatalogBloc, CatalogState>(
+              builder: (context, state) {
+                final games = state is CatalogLoaded ? state.filteredGames : <Game>[];
+                final allSelected = games.isNotEmpty &&
+                    games.every((g) => _selectedPackages.contains(g.packageName));
+                return IconButton(
+                  icon: Icon(allSelected ? Icons.deselect : Icons.select_all),
+                  tooltip: allSelected ? 'Deselect all' : 'Select all',
+                  onPressed: () {
+                    setState(() {
+                      if (allSelected) {
+                        _selectedPackages.clear();
+                      } else {
+                        _selectedPackages.addAll(games.map((g) => g.packageName));
+                      }
+                    });
+                  },
+                );
+              },
+            ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -63,7 +141,14 @@ class CatalogPage extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                Expanded(child: GameGrid(games: filteredGames)),
+                                Expanded(
+                                  child: GameGrid(
+                                    games: filteredGames,
+                                    selectionMode: _selectionMode,
+                                    selectedPackages: _selectedPackages,
+                                    onSelectionToggle: _toggleSelection,
+                                  ),
+                                ),
                               ],
                             ),
                     ),
@@ -95,6 +180,26 @@ class CatalogPage extends StatelessWidget {
           ],
         ),
       ),
+      bottomSheet: _selectionMode && _selectedPackages.isNotEmpty
+          ? BlocBuilder<CatalogBloc, CatalogState>(
+              builder: (context, state) {
+                final games = state is CatalogLoaded ? state.filteredGames : <Game>[];
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, -2))],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _downloadSelected(games),
+                    icon: const Icon(Icons.download),
+                    label: Text('Download ${_selectedPackages.length} Selected'),
+                  ),
+                );
+              },
+            )
+          : null,
     );
   }
 }

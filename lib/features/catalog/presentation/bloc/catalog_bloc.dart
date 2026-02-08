@@ -102,6 +102,8 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     switch (sortType) {
       case SortType.name:
         sorted.sort((a, b) => a.name.compareTo(b.name));
+      case SortType.nameDesc:
+        sorted.sort((a, b) => b.name.compareTo(a.name));
       case SortType.lastUpdated:
         sorted.sort((a, b) => b.lastUpdated.compareTo(a.lastUpdated));
       case SortType.size:
