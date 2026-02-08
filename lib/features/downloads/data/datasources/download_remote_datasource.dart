@@ -237,12 +237,14 @@ class DownloadRemoteDatasource {
       ));
 
       // --- EXTRACTION PHASE ---
-      emit(task.copyWith(
-        status: DownloadStatus.extracting,
-        pipelineStage: PipelineStage.extracting,
-        progress: 0.90, // Start extraction at 90%
-        eta: null,
-      ));
+      final extractionStartTime = DateTime.now();
+      emit(
+        task.copyWith(
+          status: DownloadStatus.extracting,
+          pipelineStage: PipelineStage.extracting,
+          progress: 0.90, // Start extraction at 90%
+        ),
+      );
 
       final archiveFile = File('${downloadDir.path}/${downloadedFiles.first}');
       const channel = MethodChannel(AppConstants.archiveChannel);
@@ -252,18 +254,56 @@ class DownloadRemoteDatasource {
       StreamSubscription<dynamic>? progressSubscription;
 
       try {
-        // Listen to progress events (0.0 to 1.0)
-        progressSubscription = progressChannel.receiveBroadcastStream().listen((event) {
-          if (event is double) {
+        // Listen to progress events (now receives Map with progress, extractedBytes, totalBytes)
+        progressSubscription = progressChannel.receiveBroadcastStream().listen(
+          (event) {
+            late double extractionProgress;
+            var extractedBytes = 0;
+            var totalExtractionBytes = 0;
+
+            // Handle both legacy double format and new Map format
+            if (event is Map) {
+              extractionProgress = (event['progress'] as num?)?.toDouble() ?? 0.0;
+              extractedBytes = (event['extractedBytes'] as num?)?.toInt() ?? 0;
+              totalExtractionBytes = (event['totalBytes'] as num?)?.toInt() ?? 0;
+            } else if (event is double) {
+              extractionProgress = event;
+            } else {
+              return;
+            }
+
             // Map 0.0-1.0 to 0.90-0.98
-            final overallProgress = 0.90 + (event * 0.08);
-            emit(task.copyWith(
-              status: DownloadStatus.extracting,
-              pipelineStage: PipelineStage.extracting,
-              progress: overallProgress,
-            ));
-          }
-        });
+            final overallProgress = 0.90 + (extractionProgress * 0.08);
+
+            // Calculate speed and ETA
+            double speedBps = 0;
+            Duration? eta;
+            if (extractedBytes > 0) {
+              final elapsedSeconds =
+                  DateTime.now().difference(extractionStartTime).inMilliseconds / 1000.0;
+              if (elapsedSeconds > 0.5) {
+                speedBps = extractedBytes / elapsedSeconds;
+                if (speedBps > 0 && totalExtractionBytes > extractedBytes) {
+                  final remainingBytes = totalExtractionBytes - extractedBytes;
+                  final etaSeconds = remainingBytes / speedBps;
+                  eta = Duration(seconds: etaSeconds.toInt());
+                }
+              }
+            }
+
+            emit(
+              task.copyWith(
+                status: DownloadStatus.extracting,
+                pipelineStage: PipelineStage.extracting,
+                progress: overallProgress,
+                bytesReceived: extractedBytes,
+                totalBytes: totalExtractionBytes,
+                speedBytesPerSecond: speedBps,
+                eta: eta,
+              ),
+            );
+          },
+        );
 
         await channel.invokeMethod<bool>('extract7z', {
           'filePath': archiveFile.path,

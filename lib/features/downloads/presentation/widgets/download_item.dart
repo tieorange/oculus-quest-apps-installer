@@ -126,7 +126,8 @@ class _StatusLabel extends StatelessWidget {
       PipelineStage.downloading => task.totalParts > 0
           ? 'Downloading part ${task.currentPart}/${task.totalParts}'
           : 'Downloading...',
-      PipelineStage.extracting => 'Extracting archive...',
+      PipelineStage.extracting =>
+        'Extracting... ${((task.progress - 0.90) / 0.08 * 100).clamp(0, 100).toInt()}%',
       PipelineStage.installing => 'Installing APK...',
       PipelineStage.copyingObb => 'Copying game data...',
       PipelineStage.cleaning => 'Cleaning up...',
@@ -181,7 +182,9 @@ class _ProgressDetails extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('${(task.progress * 100).toStringAsFixed(0)}%', style: style),
-            if (task.pipelineStage == PipelineStage.downloading && task.speedBytesPerSecond > 0)
+            if ((task.pipelineStage == PipelineStage.downloading ||
+                    task.pipelineStage == PipelineStage.extracting) &&
+                task.speedBytesPerSecond > 0)
               Text(FileUtils.formatSpeed(task.speedBytesPerSecond), style: style),
             if (task.bytesReceived > 0)
               Text(FileUtils.formatBytes(task.bytesReceived), style: style),

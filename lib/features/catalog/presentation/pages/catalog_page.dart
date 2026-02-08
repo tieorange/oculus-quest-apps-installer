@@ -132,6 +132,23 @@ class _CatalogPageState extends State<CatalogPage> {
                                     .bodySmall
                                     ?.copyWith(color: Colors.grey),
                               ),
+                              // Show activity indicator during slow download/extract phase
+                              if (progress > 0.05 && progress < 0.90) ...[
+                                const SizedBox(height: 16),
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Downloading & extracting game data...',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(color: Colors.grey[600], fontSize: 11),
+                                ),
+                              ],
                             ],
                           ),
                         ),
