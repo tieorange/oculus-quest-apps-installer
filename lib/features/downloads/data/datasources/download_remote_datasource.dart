@@ -93,7 +93,6 @@ class DownloadRemoteDatasource {
       final authToken = base64.encode(utf8.encode(':$password'));
       final headers = {
         'Authorization': 'Basic $authToken',
-        'User-Agent': AppConstants.userAgent,
         'Accept': '*/*',
       };
 

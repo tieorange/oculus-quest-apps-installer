@@ -13,6 +13,7 @@ class InstallerDatasource {
   static const _channel = MethodChannel(AppConstants.installerChannel);
 
   /// Installs an APK file using Android PackageInstaller API.
+  /// Returns a map with 'success' (bool), 'message' (String), and optional 'errorCode' (String).
   Future<Map<String, dynamic>> installApk(String apkPath) async {
     AppLogger.info('Installing APK: $apkPath', tag: 'InstallerDS');
     try {
@@ -21,12 +22,30 @@ class InstallerDatasource {
         {'apkPath': apkPath},
       );
       if (result != null) {
-        return result.map((k, v) => MapEntry(k.toString(), v));
+        final mapped = result.map((k, v) => MapEntry(k.toString(), v));
+        final success = mapped['success'] as bool? ?? false;
+        final message = mapped['message'] as String? ?? 'Unknown result';
+        final errorCode = mapped['errorCode'] as String?;
+
+        if (!success) {
+          AppLogger.warning(
+            'Install failed: $message${errorCode != null ? ' (code: $errorCode)' : ''}',
+            tag: 'InstallerDS',
+          );
+        } else {
+          AppLogger.info('Install succeeded: $message', tag: 'InstallerDS');
+        }
+
+        return mapped;
       }
-      return {'success': false, 'message': 'No result from installer'};
+      return {'success': false, 'message': 'No result from installer', 'errorCode': 'NO_RESULT'};
     } on PlatformException catch (e) {
-      AppLogger.error('Install failed: ${e.message}', tag: 'InstallerDS');
-      return {'success': false, 'message': e.message ?? 'Installation failed'};
+      AppLogger.error('Install failed with exception: ${e.message}', tag: 'InstallerDS', error: e);
+      return {
+        'success': false,
+        'message': e.message ?? 'Installation failed',
+        'errorCode': e.code ?? 'PLATFORM_ERROR',
+      };
     }
   }
 

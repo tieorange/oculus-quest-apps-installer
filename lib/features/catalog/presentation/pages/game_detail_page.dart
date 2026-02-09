@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
@@ -259,7 +260,13 @@ class _NotesSection extends StatelessWidget {
       if (await file.exists()) {
         return file.readAsString();
       }
-    } catch (_) {}
+    } on FileSystemException catch (e) {
+      // Log file system errors but don't surface to user (notes are optional)
+      debugPrint('Failed to load notes for $packageName: $e');
+    } catch (e, stack) {
+      // Log unexpected errors
+      debugPrint('Unexpected error loading notes for $packageName: $e\n$stack');
+    }
     return null;
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:quest_game_manager/core/utils/app_logger.dart';
 import 'package:quest_game_manager/core/utils/file_utils.dart';
 import 'package:quest_game_manager/features/config/data/models/public_config_model.dart';
 import 'package:quest_game_manager/features/config/domain/repositories/config_repository.dart';
@@ -91,8 +93,16 @@ class SettingsCubit extends Cubit<SettingsState> {
       emit(state.copyWith(cacheCleared: true));
       await Future<void>.delayed(const Duration(seconds: 1));
       emit(state.copyWith(cacheCleared: false));
-    } catch (_) {
-      // Non-fatal
+    } on FileSystemException catch (e) {
+      // Log but don't fail - cache clearing is non-critical
+      AppLogger.warning('Cache clear failed: ${e.message}', tag: 'SettingsCubit', error: e);
+    } catch (e, stack) {
+      AppLogger.error(
+        'Unexpected error clearing cache',
+        tag: 'SettingsCubit',
+        error: e,
+        stackTrace: stack,
+      );
     }
   }
 

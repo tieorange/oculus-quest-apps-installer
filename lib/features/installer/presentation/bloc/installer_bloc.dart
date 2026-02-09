@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -191,7 +192,20 @@ class InstallerBloc extends Bloc<InstallerEvent, InstallerState> {
       try {
         final version = await _datasource.getInstalledVersion(pkg);
         if (version > 0) installedVersions[pkg] = version;
-      } catch (_) {}
+      } on PlatformException catch (e) {
+        AppLogger.warning(
+          'Failed to get version for $pkg: ${e.message}',
+          tag: 'InstallerBloc',
+          error: e,
+        );
+      } catch (e, stack) {
+        AppLogger.error(
+          'Unexpected error getting version for $pkg',
+          tag: 'InstallerBloc',
+          error: e,
+          stackTrace: stack,
+        );
+      }
     }
   }
 

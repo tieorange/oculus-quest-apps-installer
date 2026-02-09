@@ -34,9 +34,7 @@ class CatalogRemoteDatasource {
         : config.baseUri;
     final downloadUrl = '$baseUrl/${AppConstants.metaArchiveName}';
     AppLogger.info('Downloading meta archive from: $downloadUrl', tag: 'CatalogDS');
-    // Use rclone User-Agent to match standard client
-    const userAgent = 'rclone/v1.66.0';
-    AppLogger.debug('Using User-Agent: $userAgent', tag: 'CatalogDS');
+    AppLogger.debug('Using User-Agent: ${AppConstants.userAgent}', tag: 'CatalogDS');
 
     final token = base64.encode(utf8.encode(':${config.password}'));
     try {
@@ -46,7 +44,6 @@ class CatalogRemoteDatasource {
         options: Options(
           headers: {
             'Authorization': 'Basic $token',
-            'User-Agent': userAgent,
             'Accept': '*/*',
           },
         ),
