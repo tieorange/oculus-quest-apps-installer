@@ -75,16 +75,22 @@ class DownloadRemoteDatasource {
       baseDir ??= await getApplicationSupportDirectory();
 
       // Check available space
-      // buffer of 200MB + game size
-      final requiredMb = game.sizeInMb + 200;
+      // Need space for: archive download + extracted files + safety margin
+      // Use 2.5x multiplier (archive ~1x + extracted ~1x + margin ~0.5x)
+      final requiredMb = (game.sizeInMb * AppConstants.minSpaceMultiplier).ceil();
       final freeSpaceMb = await DiskSpace.getFreeDiskSpaceForPath(baseDir.path);
 
       if (freeSpaceMb != null && freeSpaceMb < requiredMb) {
         throw DownloadException(
           message:
-              'Insufficient space. Required: ${requiredMb}MB, Available: ${freeSpaceMb.toInt()}MB',
+              'Insufficient space. Required: ${requiredMb}MB (${game.sizeInMb}MB × ${AppConstants.minSpaceMultiplier}), Available: ${freeSpaceMb.toInt()}MB',
         );
       }
+
+      AppLogger.info(
+        'Storage check: ${freeSpaceMb?.toInt() ?? "unknown"}MB free, ${requiredMb}MB required',
+        tag: 'DownloadDS',
+      );
 
       final downloadDir = Directory('${baseDir.path}/$gameId');
       await downloadDir.create(recursive: true);
