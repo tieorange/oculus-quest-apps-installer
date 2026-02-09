@@ -59,6 +59,9 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     _queue.add(task);
     emit(DownloadsState.loaded(queue: List.from(_queue)));
 
+    // Persist queue after adding new download
+    await _saveQueue();
+
     // Start processing if not already downloading
     if (!_isDownloading) {
       await _processQueue(emit);
@@ -73,6 +76,9 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     _queue.removeWhere((t) => t.gameId == event.gameId);
     _isDownloading = false;
     emit(DownloadsState.loaded(queue: List.from(_queue)));
+
+    // Persist queue after cancellation
+    await _saveQueue();
 
     // Process next in queue
     await _processQueue(emit);
@@ -90,9 +96,12 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     }
   }
 
-  void _onRemove(DownloadsRemove event, Emitter<DownloadsState> emit) {
+  Future<void> _onRemove(DownloadsRemove event, Emitter<DownloadsState> emit) async {
     _queue.removeWhere((t) => t.gameId == event.gameId);
     emit(DownloadsState.loaded(queue: List.from(_queue)));
+
+    // Persist queue after removal
+    await _saveQueue();
   }
 
   Future<void> _onPauseAll(DownloadsPauseAll event, Emitter<DownloadsState> emit) async {
@@ -206,12 +215,21 @@ class DownloadsBloc extends Bloc<DownloadsEvent, DownloadsState> {
     }
   }
 
+  /// Helper to persist the queue to storage.
+  Future<void> _saveQueue() async {
+    final result = await _downloadRepository.saveQueue(_queue);
+    result.fold(
+      (failure) => AppLogger.warning('Failed to save queue: $failure', tag: 'DownloadsBloc'),
+      (_) => AppLogger.debug('Queue saved (${_queue.length} tasks)', tag: 'DownloadsBloc'),
+    );
+  }
+
   @override
   Future<void> close() async {
     AppLogger.info('DownloadsBloc closing', tag: 'DownloadsBloc');
     await _downloadSubscription?.cancel();
-    // Save queue for persistence
-    await _downloadRepository.saveQueue(_queue);
+    // Final save on close
+    await _saveQueue();
     return super.close();
   }
 }

@@ -43,8 +43,52 @@ class PackageInstallerChannel(private val context: Context) : MethodChannel.Meth
                     pendingResult?.success(mapOf("success" to true, "message" to "Installed successfully"))
                     pendingResult = null
                 }
+                PackageInstaller.STATUS_FAILURE_CONFLICT -> {
+                    pendingResult?.success(mapOf(
+                        "success" to false,
+                        "message" to "Installation conflict - app may already be installed with different signature",
+                        "errorCode" to "SIGNATURE_MISMATCH"
+                    ))
+                    pendingResult = null
+                }
+                PackageInstaller.STATUS_FAILURE_BLOCKED -> {
+                    pendingResult?.success(mapOf(
+                        "success" to false,
+                        "message" to "Installation blocked - check device settings or permissions",
+                        "errorCode" to "BLOCKED"
+                    ))
+                    pendingResult = null
+                }
+                PackageInstaller.STATUS_FAILURE_ABORTED -> {
+                    pendingResult?.success(mapOf(
+                        "success" to false,
+                        "message" to "Installation cancelled by user",
+                        "errorCode" to "CANCELLED"
+                    ))
+                    pendingResult = null
+                }
+                PackageInstaller.STATUS_FAILURE_INVALID -> {
+                    pendingResult?.success(mapOf(
+                        "success" to false,
+                        "message" to "Invalid APK file",
+                        "errorCode" to "INVALID_APK"
+                    ))
+                    pendingResult = null
+                }
+                PackageInstaller.STATUS_FAILURE_STORAGE -> {
+                    pendingResult?.success(mapOf(
+                        "success" to false,
+                        "message" to "Insufficient storage space",
+                        "errorCode" to "INSUFFICIENT_STORAGE"
+                    ))
+                    pendingResult = null
+                }
                 else -> {
-                    pendingResult?.success(mapOf("success" to false, "message" to "Install error $status: $message"))
+                    pendingResult?.success(mapOf(
+                        "success" to false,
+                        "message" to "Install failed: $message (code: $status)",
+                        "errorCode" to "UNKNOWN"
+                    ))
                     pendingResult = null
                 }
             }

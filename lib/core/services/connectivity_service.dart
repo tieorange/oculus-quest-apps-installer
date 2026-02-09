@@ -46,11 +46,31 @@ class ConnectivityService {
           tag: 'Connectivity',
         );
       }
-    } catch (_) {
+    } on SocketException catch (e) {
+      // Network unreachable - expected when offline
       if (_lastKnownState) {
         _lastKnownState = false;
         _controller.add(false);
-        AppLogger.warning('Network: went offline', tag: 'Connectivity');
+        AppLogger.info('Network: went offline (${e.message})', tag: 'Connectivity');
+      }
+    } on TimeoutException catch (_) {
+      // Timeout - likely offline or very slow connection
+      if (_lastKnownState) {
+        _lastKnownState = false;
+        _controller.add(false);
+        AppLogger.info('Network: went offline (timeout)', tag: 'Connectivity');
+      }
+    } catch (e, stack) {
+      // Unexpected error during connectivity check
+      AppLogger.error(
+        'Connectivity check failed',
+        tag: 'Connectivity',
+        error: e,
+        stackTrace: stack,
+      );
+      if (_lastKnownState) {
+        _lastKnownState = false;
+        _controller.add(false);
       }
     }
   }

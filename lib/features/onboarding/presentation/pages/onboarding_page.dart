@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:quest_game_manager/core/theme/app_theme.dart';
@@ -58,17 +59,30 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   Future<void> _checkExistingPermissions() async {
-    final storage = await Permission.manageExternalStorage.isGranted;
-    final install = await Permission.requestInstallPackages.isGranted;
-    setState(() {
-      _storageGranted = storage;
-      _installGranted = install;
-      if (storage && install) {
-        _currentStep = 2;
-      } else if (storage) {
-        _currentStep = 1;
-      }
-    });
+    try {
+      final storage = await Permission.manageExternalStorage.isGranted;
+      final install = await Permission.requestInstallPackages.isGranted;
+      if (!mounted) return;
+      setState(() {
+        _storageGranted = storage;
+        _installGranted = install;
+        if (storage && install) {
+          _currentStep = 2;
+        } else if (storage) {
+          _currentStep = 1;
+        }
+      });
+    } catch (e, stack) {
+      // Log permission check failure but don't block onboarding
+      debugPrint('Failed to check existing permissions: $e\n$stack');
+      // Assume no permissions granted on error
+      if (!mounted) return;
+      setState(() {
+        _storageGranted = false;
+        _installGranted = false;
+        _currentStep = 0;
+      });
+    }
   }
 
   @override
